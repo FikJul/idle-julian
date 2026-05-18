@@ -353,7 +353,7 @@ body {
 
 .char-sprite-img {
   height: 100%;
-  width: auto;
+  width: 1000%;
   max-width: none;
   display: none;
   image-rendering: pixelated;
