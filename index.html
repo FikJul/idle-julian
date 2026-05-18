@@ -33,8 +33,7 @@
 
         <!-- Map background layer (colour + CSS pattern) -->
         <div id="map-bg"></div>
-        <div id="custom-bg-sky" class="custom-bg-layer"></div>
-        <div id="custom-bg-mid" class="custom-bg-layer"></div>
+        <div id="custom-bg-back" class="custom-bg-layer"></div>
 
         <!-- Static map decorations (emoji landmarks) -->
         <div id="map-decorations"></div>
@@ -93,14 +92,19 @@
         <div class="controller-section controller-section--full">
           <div class="ctrl-label">⟨ BG LAYERS (WEBP) ⟩</div>
           <div class="ctrl-buttons">
-            <button class="pixel-btn bg-upload-btn" data-layer="sky">🌤️ Sky</button>
-            <button class="pixel-btn bg-upload-btn" data-layer="mid">🏘️ Mid</button>
+            <button class="pixel-btn bg-upload-btn" data-layer="back">🌤️ Back (Sky)</button>
             <button class="pixel-btn bg-upload-btn" data-layer="front">🌾 Front</button>
             <button class="pixel-btn danger-btn" id="clear-bg-btn">🧹 Clear BG</button>
           </div>
-          <input type="file" id="bg-upload-sky" accept="image/webp" hidden />
-          <input type="file" id="bg-upload-mid" accept="image/webp" hidden />
+          <input type="file" id="bg-upload-back" accept="image/webp" hidden />
           <input type="file" id="bg-upload-front" accept="image/webp" hidden />
+        </div>
+
+        <div class="controller-section controller-section--full bg-size-guide">
+          <div class="ctrl-label">⟨ BG PIXEL GUIDE ⟩</div>
+          <div class="bg-size-guide-text">
+            Atas tanah (Back/Sky): 800 × 420 px • Tanah (Front): 800 × 180 px
+          </div>
         </div>
 
       </div><!-- /#world-controller -->
