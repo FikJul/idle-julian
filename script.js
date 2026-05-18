@@ -20,8 +20,9 @@ const RELEASE_DATE = new Date('2026-05-18T00:00:00Z');
 const WORLD_W = 800;
 const WORLD_H = 600;
 const GROUND_START_Y = WORLD_H * 0.7;
-// Keep characters below HUD/cloud decorations and above the 70/30 ground split.
+// 110px top margin keeps sprites below HUD panel and top decorations.
 const CHARACTER_TOP_MARGIN = 110;
+// 70px bottom margin keeps sprites visibly above the ground-start boundary.
 const CHARACTER_BOTTOM_MARGIN = 70;
 const CHARACTER_Y_MIN = CHARACTER_TOP_MARGIN;
 const CHARACTER_Y_MAX = GROUND_START_Y - CHARACTER_BOTTOM_MARGIN;
