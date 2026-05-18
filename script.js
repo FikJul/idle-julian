@@ -35,6 +35,8 @@ const FRAME_MS = 1000 / 60;
 // Frame-ratio clamps avoid extreme jumps after lag spikes and tiny-dt crawl.
 const MIN_FRAME_RATIO = 0.5;
 const MAX_FRAME_RATIO = 4;
+const HERO_SIDE_PADDING = 20;
+const HERO_FALLBACK_WIDTH = 64;
 
 /** Maximum number of characters allowed simultaneously */
 const MAX_CHARACTERS = 1;
@@ -99,7 +101,7 @@ const MAPS = [
     id: 'alun-alun',
     name: 'Alun-Alun Desa',
     subtitle: 'Village Square',
-    allowedTypes: ['male_hero'],
+    allowedTypes: ['male-hero'],
     decorations: [
       { emoji: '🌳', x: 4,  y: 38, size: 44 },
       { emoji: '🌳', x: 84, y: 36, size: 44 },
@@ -118,7 +120,7 @@ const MAPS = [
     id: 'jembatan',
     name: 'Jembatan Batu',
     subtitle: 'The Stone Bridge',
-    allowedTypes: ['male_hero'],
+    allowedTypes: ['male-hero'],
     decorations: [
       { emoji: '🌉', x: 35, y: 38, size: 80 },
       { emoji: '🌊', x: 5,  y: 68, size: 34 },
@@ -139,7 +141,7 @@ const MAPS = [
     id: 'pinggiran-hutan',
     name: 'Pinggiran Hutan',
     subtitle: 'The Outskirts',
-    allowedTypes: ['male_hero'],
+    allowedTypes: ['male-hero'],
     decorations: [
       { emoji: '🌲', x: 3,  y: 25, size: 52 },
       { emoji: '🌲', x: 12, y: 30, size: 44 },
@@ -177,7 +179,7 @@ const MAPS = [
 
 /** @type {Object.<string, CharTypeDef>} */
 const CHAR_TYPES = {
-  male_hero: {
+  'male-hero': {
     label:    'Male Hero',
     emoji:    '🧑',
     behavior: 'auto-walker',
@@ -230,6 +232,8 @@ MAPS.forEach(m => { mapCharacters[m.id] = []; });
  * @property {number}      [maxX]
  * @property {string}      [lastVisualState]
  * @property {number}      [lastFacing]
+ * @property {string[]}    [spriteCandidates]
+ * @property {number}      [spriteCandidateIndex]
  */
 
 /** @type {CharState[]} */
@@ -432,8 +436,7 @@ function createCharacter(type) {
 
   // Build DOM element
   const el = document.createElement('div');
-  const cssTypeClass = `char-${type.replace(/_/g, '-')}`;
-  el.className = `character ${cssTypeClass}`;
+  el.className = `character char-${type}`;
   el.dataset.charId = String(id);
 
   const spriteEl = document.createElement('div');
@@ -480,10 +483,25 @@ function createCharacter(type) {
     spriteEl,
     spriteImg,
     spriteFallbackEl,
-    minX:       20,
-    maxX:       Math.max(20, WORLD_W - width - 20),
+    minX:       HERO_SIDE_PADDING,
+    maxX:       Math.max(HERO_SIDE_PADDING, WORLD_W - width - HERO_SIDE_PADDING),
     lastVisualState: '',
     lastFacing: 0,
+  };
+  spriteImg.onload = () => {
+    if (!char.spriteFallbackEl) return;
+    spriteImg.style.display = 'block';
+    char.spriteFallbackEl.style.display = 'none';
+  };
+  spriteImg.onerror = () => {
+    if (!char.spriteCandidates?.length) return;
+    char.spriteCandidateIndex = (char.spriteCandidateIndex ?? 0) + 1;
+    if (char.spriteCandidateIndex < char.spriteCandidates.length) {
+      spriteImg.src = char.spriteCandidates[char.spriteCandidateIndex];
+    } else if (char.spriteFallbackEl) {
+      spriteImg.style.display = 'none';
+      char.spriteFallbackEl.style.display = 'block';
+    }
   };
 
   initBehavior(char);
@@ -544,24 +562,9 @@ function syncHeroVisual(char, forceSpriteReload = false) {
   if (!forceSpriteReload && char.lastVisualState === char.state) return;
   char.lastVisualState = char.state;
   const preferredPath = isWalking ? HERO_ASSET_PATHS.walk : HERO_ASSET_PATHS.idle;
-  const candidates = [preferredPath, HERO_ASSET_PATHS.design];
-  let idx = 0;
-  const img = char.spriteImg;
-  const fallback = char.spriteFallbackEl;
-  img.onload = () => {
-    img.style.display = 'block';
-    fallback.style.display = 'none';
-  };
-  img.onerror = () => {
-    idx += 1;
-    if (idx < candidates.length) {
-      img.src = candidates[idx];
-    } else {
-      img.style.display = 'none';
-      fallback.style.display = 'block';
-    }
-  };
-  img.src = candidates[idx];
+  char.spriteCandidates = [preferredPath, HERO_ASSET_PATHS.design];
+  char.spriteCandidateIndex = 0;
+  char.spriteImg.src = char.spriteCandidates[0];
 }
 
 // ================================================================
@@ -634,9 +637,8 @@ function updateAutoWalker(char, dt) {
   }
   if (char.state !== 'walking') return;
 
-  const minX = char.minX ?? 20;
-  const width = char.el.getBoundingClientRect().width || 64;
-  const maxX = char.maxX ?? Math.max(minX, WORLD_W - width - 20);
+  const minX = char.minX ?? HERO_SIDE_PADDING;
+  const maxX = char.maxX ?? Math.max(minX, WORLD_W - HERO_FALLBACK_WIDTH - HERO_SIDE_PADDING);
   char.x += char.typeDef.speed * char.direction;
   syncHeroVisual(char);
 
@@ -1013,7 +1015,7 @@ function init() {
   switchMap(MAPS[0]);
 
   // 4. Spawn a small starting population
-  spawnCharacter('male_hero');
+  spawnCharacter('male-hero');
 
   // 5. Welcome message
   addLog(`🌟 Selamat datang di ${MAPS[0].name}!`);
