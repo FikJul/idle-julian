@@ -534,7 +534,10 @@ function syncHeroVisual(char, forceSpriteReload = false) {
   if (char.type !== 'male_hero' || !char.spriteEl || !char.spriteImg || !char.spriteFallbackEl) return;
   const isWalking = char.state === 'walking';
   const facing = char.direction >= 0 ? 1 : -1;
-  char.spriteEl.style.transform = `scaleX(${facing})`;
+  if (forceSpriteReload || char.lastFacing !== facing) {
+    char.spriteEl.style.transform = `scaleX(${facing})`;
+    char.lastFacing = facing;
+  }
   char.el.classList.toggle('is-walking', isWalking);
 
   if (!forceSpriteReload && char.lastVisualState === char.state) return;
@@ -628,6 +631,7 @@ function updateAutoWalker(char, dt) {
     }
     return;
   }
+  if (char.state !== 'walking') return;
 
   const minX = char.minX ?? 20;
   const maxX = char.maxX ?? (WORLD_W - 84);
