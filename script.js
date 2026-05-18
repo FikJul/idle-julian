@@ -432,7 +432,8 @@ function createCharacter(type) {
 
   // Build DOM element
   const el = document.createElement('div');
-  el.className = `character char-${type}`;
+  const cssTypeClass = `char-${type.replace(/_/g, '-')}`;
+  el.className = `character ${cssTypeClass}`;
   el.dataset.charId = String(id);
 
   const spriteEl = document.createElement('div');
@@ -531,7 +532,7 @@ function setupAutoWalker(char) {
  * @param {boolean} forceSpriteReload
  */
 function syncHeroVisual(char, forceSpriteReload = false) {
-  if (char.type !== 'male_hero' || !char.spriteEl || !char.spriteImg || !char.spriteFallbackEl) return;
+  if (!char.spriteEl || !char.spriteImg || !char.spriteFallbackEl) return;
   const isWalking = char.state === 'walking';
   const facing = char.direction >= 0 ? 1 : -1;
   if (forceSpriteReload || char.lastFacing !== facing) {
@@ -634,7 +635,8 @@ function updateAutoWalker(char, dt) {
   if (char.state !== 'walking') return;
 
   const minX = char.minX ?? 20;
-  const maxX = char.maxX ?? (WORLD_W - 84);
+  const width = char.el.getBoundingClientRect().width || 64;
+  const maxX = char.maxX ?? Math.max(minX, WORLD_W - width - 20);
   char.x += char.typeDef.speed * char.direction;
   syncHeroVisual(char);
 

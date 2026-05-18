@@ -374,7 +374,7 @@ body {
 }
 
 /* ── Character Type Styling ──────────────────────────────────── */
-.char-male_hero .char-sprite {
+.char-male-hero .char-sprite {
   border-color: #7bd9ff;
   background: rgba(12, 24, 40, 0.55);
 }
@@ -391,13 +391,13 @@ body {
   50%      { transform: translateY(-4px); }
 }
 
-.char-male_hero .char-sprite-img,
-.char-male_hero .char-sprite-fallback {
+.char-male-hero .char-sprite-img,
+.char-male-hero .char-sprite-fallback {
   animation: hero-idle-float 1.8s ease-in-out infinite;
 }
 
-.char-male_hero.is-walking .char-sprite-img,
-.char-male_hero.is-walking .char-sprite-fallback {
+.char-male-hero.is-walking .char-sprite-img,
+.char-male-hero.is-walking .char-sprite-fallback {
   animation: hero-walk-bob 0.28s ease-in-out infinite;
 }
 
