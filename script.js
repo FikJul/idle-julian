@@ -19,6 +19,9 @@ const RELEASE_DATE = new Date('2026-05-18T00:00:00Z');
 /** Size of the game world (matches CSS) */
 const WORLD_W = 800;
 const WORLD_H = 600;
+const SKY_HEIGHT = WORLD_H * 0.7;
+const CHARACTER_Y_MIN = 110;
+const CHARACTER_Y_MAX = SKY_HEIGHT - 70;
 
 /** Maximum number of characters allowed simultaneously */
 const MAX_CHARACTERS = 14;
@@ -53,9 +56,9 @@ const MAPS = [
       { emoji: '🏠', x: 38, y: 6,  size: 48 },
       { emoji: '🏠', x: 55, y: 6,  size: 40 },
       { emoji: '⛲', x: 47, y: 42, size: 40 },
-      { emoji: '🌾', x: 12, y: 72, size: 28 },
-      { emoji: '🌾', x: 22, y: 75, size: 24 },
-      { emoji: '🌾', x: 70, y: 73, size: 28 },
+      { emoji: '🌾', x: 12, y: 66, size: 28 },
+      { emoji: '🌾', x: 22, y: 68, size: 24 },
+      { emoji: '🌾', x: 70, y: 67, size: 28 },
       { emoji: '🛤️', x: 44, y: 55, size: 52 },
       { emoji: '☁️', x: 10, y: 5,  size: 36 },
       { emoji: '☁️', x: 65, y: 3,  size: 28 },
@@ -76,7 +79,7 @@ const MAPS = [
       { emoji: '🕯️', x: 15, y: 8,  size: 30 },
       { emoji: '🛢️', x: 3,  y: 65, size: 34 },
       { emoji: '🛢️', x: 90, y: 62, size: 34 },
-      { emoji: '🪵', x: 85, y: 72, size: 32 },
+      { emoji: '🪵', x: 85, y: 68, size: 32 },
       { emoji: '🎶', x: 72, y: 22, size: 28 },
     ],
   },
@@ -90,10 +93,10 @@ const MAPS = [
       { emoji: '🌲', x: 12, y: 30, size: 44 },
       { emoji: '🌲', x: 74, y: 22, size: 52 },
       { emoji: '🌲', x: 86, y: 30, size: 44 },
-      { emoji: '🌿', x: 30, y: 68, size: 28 },
+      { emoji: '🌿', x: 30, y: 66, size: 28 },
       { emoji: '🍄', x: 42, y: 65, size: 28 },
-      { emoji: '🍄', x: 60, y: 70, size: 24 },
-      { emoji: '🪨', x: 55, y: 62, size: 32 },
+      { emoji: '🍄', x: 60, y: 68, size: 24 },
+      { emoji: '🪨', x: 55, y: 63, size: 32 },
       { emoji: '🦇', x: 47, y: 6,  size: 28 },
       { emoji: '🌕', x: 82, y: 4,  size: 36 },
       { emoji: '⭐', x: 18, y: 8,  size: 22 },
@@ -175,9 +178,8 @@ let currentMap = MAPS[0];
  * @property {string}      state      - Behaviour state machine value
  * @property {number}      timer      - Countdown in ms
  * @property {number}      direction  - +1 / -1 for patroller
- * @property {boolean}     isVertical - Patrol axis
- * @property {{x:number,y:number}|null} patrolA
- * @property {{x:number,y:number}|null} patrolB
+   * @property {{x:number,y:number}|null} patrolA
+   * @property {{x:number,y:number}|null} patrolB
  */
 
 /** @type {CharState[]} */
@@ -334,7 +336,7 @@ function createCharacter(type) {
 
   // Random starting position (keep away from edges)
   const x = 60 + Math.random() * (WORLD_W - 160);
-  const y = 100 + Math.random() * (WORLD_H - 240);
+  const y = CHARACTER_Y_MIN + Math.random() * (CHARACTER_Y_MAX - CHARACTER_Y_MIN);
 
   // Build DOM element
   const el = document.createElement('div');
@@ -368,7 +370,6 @@ function createCharacter(type) {
     state:      'idle',
     timer:      0,
     direction:  1,
-    isVertical: Math.random() < 0.5,
     patrolA:    null,
     patrolB:    null,
   };
@@ -409,21 +410,15 @@ function initBehavior(char) {
 /** @param {CharState} char */
 function pickWanderTarget(char) {
   char.targetX = 50 + Math.random() * (WORLD_W - 140);
-  char.targetY = 90 + Math.random() * (WORLD_H - 220);
+  char.targetY = char.y;
   char.state   = 'moving';
 }
 
-/** Set up a horizontal or vertical patrol corridor. @param {CharState} char */
+/** Set up a horizontal patrol corridor. @param {CharState} char */
 function setupPatrol(char) {
   const half = char.typeDef.patrolLen / 2;
-
-  if (char.isVertical) {
-    char.patrolA = { x: char.x, y: Math.max(90,          char.y - half) };
-    char.patrolB = { x: char.x, y: Math.min(WORLD_H - 120, char.y + half) };
-  } else {
-    char.patrolA = { x: Math.max(50,          char.x - half), y: char.y };
-    char.patrolB = { x: Math.min(WORLD_W - 50, char.x + half), y: char.y };
-  }
+  char.patrolA = { x: Math.max(50,          char.x - half), y: char.y };
+  char.patrolB = { x: Math.min(WORLD_W - 50, char.x + half), y: char.y };
 
   char.targetX = char.patrolB.x;
   char.targetY = char.patrolB.y;
@@ -551,17 +546,14 @@ function updateSprinter(char, dt) {
  */
 function moveTowards(char, speed) {
   const dx   = char.targetX - char.x;
-  const dy   = char.targetY - char.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
+  const dist = Math.abs(dx);
 
   if (dist <= speed) {
     char.x = char.targetX;
-    char.y = char.targetY;
     return true;
   }
 
-  char.x += (dx / dist) * speed;
-  char.y += (dy / dist) * speed;
+  char.x += Math.sign(dx) * speed;
   return false;
 }
 
