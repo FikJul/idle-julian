@@ -32,6 +32,9 @@ const GRAVITY_ACCEL = 0.35;
 const MAX_FALL_SPEED = 9;
 // Reference frame duration for 60 FPS timing normalization.
 const FRAME_MS = 1000 / 60;
+// Frame-ratio clamps avoid extreme jumps after lag spikes and tiny-dt crawl.
+const MIN_FRAME_RATIO = 0.5;
+const MAX_FRAME_RATIO = 4;
 
 /** Maximum number of characters allowed simultaneously */
 const MAX_CHARACTERS = 14;
@@ -641,8 +644,7 @@ function getGroundYForCharacter(el) {
 
 /** @param {CharState} char @param {number} dt */
 function applyGravity(char, dt) {
-  // Clamp ratio to reduce extreme jumps on lag spikes and avoid tiny-dt crawl.
-  const frameRatio = Math.max(0.5, Math.min(4, dt / FRAME_MS));
+  const frameRatio = Math.max(MIN_FRAME_RATIO, Math.min(MAX_FRAME_RATIO, dt / FRAME_MS));
   if (char.y < char.groundY) {
     char.vy = Math.min(MAX_FALL_SPEED, char.vy + GRAVITY_ACCEL * frameRatio);
     char.y = Math.min(char.groundY, char.y + char.vy * frameRatio);
@@ -724,11 +726,7 @@ function uploadBackgroundLayer(layer, file) {
   }
   const reader = new FileReader();
   reader.onload = () => {
-    const result = typeof reader.result === 'string' ? reader.result : null;
-    if (!result) {
-      addLog('⚠️ Gagal membaca file background.');
-      return;
-    }
+    const result = /** @type {string} */ (reader.result);
     writeStoredBackground(layer, result);
     applyCustomBackgroundLayer(layer, result);
     addLog(`🖼️ Layer ${layer.toUpperCase()} diperbarui.`);
