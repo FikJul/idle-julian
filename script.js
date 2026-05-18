@@ -589,6 +589,13 @@ function syncHeroVisual(char, forceSpriteReload = false) {
  */
 function setHeroSpriteCandidate(char, candidateIndex) {
   if (!char.spriteImg || !char.spriteCandidates?.length) return;
+  if (candidateIndex < 0 || candidateIndex >= char.spriteCandidates.length) {
+    if (char.spriteFallbackEl) {
+      char.spriteImg.style.display = 'none';
+      char.spriteFallbackEl.style.display = 'block';
+    }
+    return;
+  }
   const frameCounts = char.spriteCandidateFrameCounts ?? [];
   char.spriteCandidateIndex = candidateIndex;
   char.spriteFrameCount = Math.max(1, frameCounts[candidateIndex] ?? 1);
