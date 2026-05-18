@@ -20,8 +20,10 @@ const RELEASE_DATE = new Date('2026-05-18T00:00:00Z');
 const WORLD_W = 800;
 const WORLD_H = 600;
 const SKY_HEIGHT = WORLD_H * 0.7;
-const CHARACTER_Y_MIN = 110;
-const CHARACTER_Y_MAX = SKY_HEIGHT - 70;
+const CHARACTER_TOP_MARGIN = 110;
+const CHARACTER_BOTTOM_MARGIN = 70;
+const CHARACTER_Y_MIN = CHARACTER_TOP_MARGIN;
+const CHARACTER_Y_MAX = SKY_HEIGHT - CHARACTER_BOTTOM_MARGIN;
 
 /** Maximum number of characters allowed simultaneously */
 const MAX_CHARACTERS = 14;
@@ -410,6 +412,7 @@ function initBehavior(char) {
 /** @param {CharState} char */
 function pickWanderTarget(char) {
   char.targetX = 50 + Math.random() * (WORLD_W - 140);
+  // Keep vertical lane fixed: movement is left/right only.
   char.targetY = char.y;
   char.state   = 'moving';
 }
