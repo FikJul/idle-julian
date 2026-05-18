@@ -338,9 +338,6 @@ body {
 .char-sprite {
   width: 128px;
   height: 128px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 34px;
   border: 2px solid rgba(255, 255, 255, 0.25);
   background: rgba(0, 0, 0, 0.35);
