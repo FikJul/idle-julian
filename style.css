@@ -1,0 +1,464 @@
+/* ================================================================
+   IDLE JULIAN — Fantasy RPG Village
+   style.css
+   ================================================================ */
+
+/* ── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ── Root Variables ───────────────────────────────────────────── */
+:root {
+  --gold:        #FFD700;
+  --gold-dim:    rgba(255, 215, 0, 0.45);
+  --dark-bg:     #08090f;
+  --frame-bg:    #140a00;
+  --font-main:   'VT323', monospace;
+  --font-title:  'Press Start 2P', monospace;
+  --world-w:     800px;
+  --world-h:     600px;
+}
+
+/* ── Body — dark arcade backdrop ─────────────────────────────── */
+body {
+  background: var(--dark-bg);
+  background-image: radial-gradient(ellipse at 50% 40%, #1a1a2e 0%, #08090f 70%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-main);
+  overflow-x: hidden;
+  padding: 20px 0;
+}
+
+/* ── Arcade Cabinet Frame ─────────────────────────────────────── */
+#arcade-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Subtle outer glow */
+  filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.18));
+}
+
+/* ── Cabinet Title Bar ────────────────────────────────────────── */
+#arcade-title {
+  font-family: var(--font-title);
+  font-size: 15px;
+  color: var(--gold);
+  text-shadow: 0 0 12px #FFD700, 0 0 24px #FF8C00;
+  padding: 10px 28px;
+  background: var(--frame-bg);
+  border: 3px solid var(--gold);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  letter-spacing: 3px;
+}
+
+/* ── Game World Box ───────────────────────────────────────────── */
+#game-box {
+  width: var(--world-w);
+  height: var(--world-h);
+  position: relative;
+  overflow: hidden;
+  border: 4px solid var(--gold);
+  cursor: default;
+  image-rendering: pixelated;
+  /* Scanline overlay via pseudo-element */
+}
+
+/* CRT scanline effect */
+#game-box::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent         0px,
+    transparent         3px,
+    rgba(0,0,0,0.06)   3px,
+    rgba(0,0,0,0.06)   4px
+  );
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Vignette corners */
+#game-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 60%,
+    rgba(0,0,0,0.55) 100%
+  );
+  pointer-events: none;
+  z-index: 49;
+}
+
+/* ── Map Background Layer ─────────────────────────────────────── */
+#map-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transition: background 0.6s ease;
+}
+
+/* ── MAP THEMES ───────────────────────────────────────────────── */
+
+/* Village Square */
+#game-box.map-alun-alun #map-bg {
+  background:
+    /* cobblestone tile pattern */
+    repeating-linear-gradient(
+      90deg,
+      rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px,
+      transparent 1px, transparent 32px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px,
+      transparent 1px, transparent 32px
+    ),
+    /* sky / ground split */
+    linear-gradient(
+      to bottom,
+      #87CEEB 0%,
+      #a8dff5 30%,
+      #87CEEB 38%,
+      #6B8E4E 38%,
+      #5a7a38 100%
+    );
+}
+
+/* The Tavern (indoor) */
+#game-box.map-kedai-minum #map-bg {
+  background:
+    /* wood plank pattern */
+    repeating-linear-gradient(
+      90deg,
+      rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 1px,
+      transparent 1px, transparent 80px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px,
+      transparent 1px, transparent 40px
+    ),
+    linear-gradient(
+      to bottom,
+      #2e1a08 0%,
+      #4a2710 35%,
+      #6b3d1a 55%,
+      #8b5228 100%
+    );
+}
+
+/* The Outskirts (forest) */
+#game-box.map-pinggiran-hutan #map-bg {
+  background:
+    /* leaf shimmer pattern */
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px,
+      transparent 2px, transparent 20px
+    ),
+    linear-gradient(
+      to bottom,
+      #060d03 0%,
+      #0d2006 25%,
+      #142e07 50%,
+      #0a1a04 100%
+    );
+}
+
+/* ── Map Decorations ─────────────────────────────────────────── */
+#map-decorations {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.map-deco {
+  position: absolute;
+  font-size: 36px;
+  line-height: 1;
+  pointer-events: none;
+  /* subtle drop shadow keeps emoji readable on any background */
+  filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.7));
+}
+
+/* ── HUD Overlay ─────────────────────────────────────────────── */
+#hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  padding: 8px 10px;
+}
+
+#hud-left {
+  background: rgba(0, 0, 0, 0.65);
+  border: 2px solid var(--gold);
+  border-radius: 2px;
+  padding: 6px 10px;
+  min-width: 180px;
+  backdrop-filter: blur(4px);
+}
+
+#map-name {
+  font-size: 20px;
+  color: var(--gold);
+  text-shadow: 1px 1px 0 #000;
+  white-space: nowrap;
+}
+
+#day-counter {
+  font-size: 16px;
+  color: #88FF88;
+  text-shadow: 1px 1px 0 #000;
+}
+
+#population {
+  font-size: 14px;
+  color: #aad4ff;
+  text-shadow: 1px 1px 0 #000;
+  margin-top: 2px;
+}
+
+/* ── Character Container ─────────────────────────────────────── */
+#character-container {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+/* ── Individual Character ────────────────────────────────────── */
+.character {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  user-select: none;
+  /* CSS transitions disabled — JS moves them every frame */
+}
+
+.char-sprite {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 3px;
+  image-rendering: pixelated;
+}
+
+.char-label {
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  white-space: nowrap;
+  margin-top: 2px;
+  background: rgba(0,0,0,0.45);
+  padding: 0 3px;
+  border-radius: 1px;
+}
+
+/* ── Character Type Styling ──────────────────────────────────── */
+.char-warga   .char-sprite { border-color: #FFD700; background: rgba(80, 60, 10, 0.5); }
+.char-ksatria .char-sprite { border-color: #C0C0C0; background: rgba(30, 30, 60, 0.5); }
+.char-slime   .char-sprite { border-color: #44FF44; background: rgba(5,  50, 5,  0.5); }
+.char-kucing  .char-sprite { border-color: #FFA500; background: rgba(60, 35, 5,  0.5); }
+
+/* ── Character Animations ────────────────────────────────────── */
+
+/* Slime: perpetual vertical bounce */
+@keyframes slime-bounce {
+  0%, 100% { transform: translateY(0)    scaleX(1)    scaleY(1);    }
+  40%       { transform: translateY(-12px) scaleX(0.9) scaleY(1.1); }
+  60%       { transform: translateY(-14px) scaleX(0.85) scaleY(1.15); }
+  80%       { transform: translateY(-4px)  scaleX(1.05) scaleY(0.95); }
+}
+
+.char-slime .char-sprite {
+  animation: slime-bounce 0.6s ease-in-out infinite;
+}
+
+/* Kucing: sprint flash */
+@keyframes sprint-flash {
+  0%, 100% { opacity: 1;   filter: brightness(1);   }
+  50%       { opacity: 0.6; filter: brightness(1.8); }
+}
+
+.char-kucing.is-sprinting .char-sprite {
+  animation: sprint-flash 0.12s linear infinite;
+}
+
+/* Ksatria: subtle idle sway */
+@keyframes patrol-sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50%       { transform: rotate(2deg); }
+}
+
+.char-ksatria .char-sprite {
+  animation: patrol-sway 1.2s ease-in-out infinite;
+}
+
+/* ── Live Event Log ───────────────────────────────────────────── */
+#live-log {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 270px;
+  background: rgba(0, 0, 0, 0.72);
+  border: 2px solid var(--gold-dim);
+  border-radius: 3px;
+  padding: 6px 8px;
+  z-index: 10;
+  backdrop-filter: blur(3px);
+  /* prevent overflow from log lines */
+  overflow: hidden;
+}
+
+#log-title {
+  font-size: 14px;
+  color: var(--gold);
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--gold-dim);
+  padding-bottom: 2px;
+}
+
+#log-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* cap visible log height */
+  max-height: 130px;
+  overflow: hidden;
+}
+
+.log-entry {
+  font-size: 13px;
+  color: #aaffaa;
+  text-shadow: 1px 1px 0 #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes log-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.log-entry.fresh {
+  animation: log-fade-in 0.25s ease forwards;
+}
+
+.log-entry.old   { color: rgba(140, 190, 140, 0.55); }
+.log-entry.older { color: rgba(100, 150, 100, 0.30); }
+
+/* ── World Controller ─────────────────────────────────────────── */
+#world-controller {
+  width: var(--world-w);
+  background: var(--frame-bg);
+  border: 4px solid var(--gold);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  padding: 10px 14px;
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.controller-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* push "WORLD" section to the far right */
+.controller-section--right {
+  margin-left: auto;
+}
+
+.ctrl-label {
+  font-size: 15px;
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(255,215,0,0.6);
+}
+
+.ctrl-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ── Pixel Art Buttons ───────────────────────────────────────── */
+.pixel-btn {
+  font-family: var(--font-main);
+  font-size: 17px;
+  padding: 4px 12px;
+  background: #2a1300;
+  color: var(--gold);
+  border: 2px solid var(--gold);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.08s, transform 0.08s;
+  text-shadow: 1px 1px 0 #000;
+  image-rendering: pixelated;
+  white-space: nowrap;
+}
+
+.pixel-btn:hover {
+  background: #4a2a00;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 0 #000;
+}
+
+.pixel-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.pixel-btn.is-active {
+  background: #6b3d00;
+  color: #fff;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+}
+
+.pixel-btn.danger-btn {
+  border-color: #ff6644;
+  color: #ff6644;
+  background: #1a0800;
+}
+
+.pixel-btn.danger-btn:hover {
+  background: #3a1200;
+}
+
+/* ── Responsive scale-down on small screens ─────────────────── */
+@media (max-width: 860px) {
+  #arcade-frame {
+    transform: scale(0.85);
+    transform-origin: top center;
+  }
+}
+
+@media (max-width: 700px) {
+  #arcade-frame {
+    transform: scale(0.65);
+    transform-origin: top center;
+  }
+}
