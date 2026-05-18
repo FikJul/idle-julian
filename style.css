@@ -14,8 +14,11 @@
 :root {
   --gold:        #FFD700;
   --gold-dim:    rgba(255, 215, 0, 0.45);
+  --gold-bright: #ffe966;
   --dark-bg:     #08090f;
   --frame-bg:    #140a00;
+  --frame-border:#8b5c00;
+  --accent-red:  #c0392b;
   --font-main:   'VT323', monospace;
   --font-title:  'Press Start 2P', monospace;
   --world-w:     800px;
@@ -25,7 +28,21 @@
 /* ── Body — dark arcade backdrop ─────────────────────────────── */
 body {
   background: var(--dark-bg);
-  background-image: radial-gradient(ellipse at 50% 40%, #1a1a2e 0%, #08090f 70%);
+  background-image:
+    /* distant stars */
+    radial-gradient(1px 1px at  8% 12%, rgba(255,255,255,0.55), transparent),
+    radial-gradient(1px 1px at 20% 28%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(1px 1px at 33%  8%, rgba(255,255,255,0.45), transparent),
+    radial-gradient(1px 1px at 50% 20%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(1px 1px at 63% 40%, rgba(255,255,255,0.40), transparent),
+    radial-gradient(1px 1px at 78%  6%, rgba(255,255,255,0.55), transparent),
+    radial-gradient(1px 1px at 88% 30%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(1px 1px at 15% 55%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(1px 1px at 44% 65%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(1px 1px at 72% 70%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(1px 1px at 92% 80%, rgba(255,255,255,0.40), transparent),
+    /* nebula glow */
+    radial-gradient(ellipse at 50% 40%, #1a1a2e 0%, #08090f 70%);
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -40,8 +57,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Subtle outer glow */
-  filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.18));
+  /* Outer glow — dual-layer for depth */
+  filter:
+    drop-shadow(0 0 18px rgba(255, 215, 0, 0.28))
+    drop-shadow(0 0 42px rgba(255, 160, 0, 0.12));
 }
 
 /* ── Cabinet Title Bar ────────────────────────────────────────── */
@@ -49,14 +68,25 @@ body {
   font-family: var(--font-title);
   font-size: 15px;
   color: var(--gold);
-  text-shadow: 0 0 12px #FFD700, 0 0 24px #FF8C00;
+  text-shadow:
+    0 0 8px  #FFD700,
+    0 0 18px #FF8C00,
+    0 0 36px rgba(255, 140, 0, 0.55);
   padding: 10px 28px;
-  background: var(--frame-bg);
+  background: linear-gradient(180deg, #1e0c00 0%, var(--frame-bg) 100%);
   border: 3px solid var(--gold);
   border-bottom: none;
   border-radius: 6px 6px 0 0;
   letter-spacing: 3px;
+  position: relative;
 }
+
+/* Flicker pulse on title */
+@keyframes title-pulse {
+  0%, 100% { text-shadow: 0 0 8px #FFD700, 0 0 18px #FF8C00, 0 0 36px rgba(255,140,0,0.55); }
+  50%       { text-shadow: 0 0 12px #FFD700, 0 0 28px #FF8C00, 0 0 54px rgba(255,140,0,0.75); }
+}
+#arcade-title { animation: title-pulse 2.8s ease-in-out infinite; }
 
 /* ── Game World Box ───────────────────────────────────────────── */
 #game-box {
@@ -65,9 +95,12 @@ body {
   position: relative;
   overflow: hidden;
   border: 4px solid var(--gold);
+  /* Double inner ring for ornate RPG feel */
+  box-shadow:
+    inset 0 0 0 2px rgba(255,215,0,0.20),
+    inset 0 0 24px rgba(0,0,0,0.55);
   cursor: default;
   image-rendering: pixelated;
-  /* Scanline overlay via pseudo-element */
 }
 
 /* CRT scanline effect */
@@ -118,8 +151,7 @@ body {
   opacity: 0;
 }
 
-#custom-bg-sky { z-index: 1; }
-#custom-bg-mid { z-index: 2; }
+#custom-bg-back { z-index: 1; }
 #custom-bg-front {
   z-index: 7;
   background-size: 100% 100%;
@@ -130,7 +162,7 @@ body {
   inset: 0;
   z-index: 8;
   pointer-events: none;
-  transition: background-color 0.6s ease;
+  transition: background 0.8s ease;
 }
 
 /* ── MAP THEMES ───────────────────────────────────────────────── */
@@ -162,29 +194,30 @@ body {
     );
 }
 
-/* The Tavern (indoor) */
-#game-box.map-kedai-minum #map-bg {
+/* The Bridge */
+#game-box.map-jembatan #map-bg {
   background:
-    /* stone/dirt blocks */
+    /* rope/plank texture */
     repeating-linear-gradient(
       90deg,
-      rgba(66, 66, 72, 0.40) 0px, rgba(66, 66, 72, 0.40) 2px,
-      rgba(84, 84, 92, 0.22) 2px, rgba(84, 84, 92, 0.22) 24px
+      rgba(100, 75, 40, 0.30) 0px, rgba(100, 75, 40, 0.30) 2px,
+      rgba(130, 100, 60, 0.18) 2px, rgba(130, 100, 60, 0.18) 20px
     ),
     repeating-linear-gradient(
       0deg,
-      rgba(35, 35, 40, 0.25) 0px, rgba(35, 35, 40, 0.25) 2px,
-      rgba(58, 58, 65, 0.15) 2px, rgba(58, 58, 65, 0.15) 24px
+      rgba(70, 55, 30, 0.20) 0px, rgba(70, 55, 30, 0.20) 2px,
+      rgba(100, 80, 50, 0.12) 2px, rgba(100, 80, 50, 0.12) 24px
     ),
     linear-gradient(
       to bottom,
-      #8fdcff 0%,
-      #c6f2ff 36%,
-      #9ddfff 70%,
-      #8ccf6f 70%,
-      #8ccf6f 73%,
-      #6a676f 73%,
-      #4b4a50 100%
+      #6ac8f5 0%,
+      #aee4ff 30%,
+      #88d4f0 60%,
+      #4ab8e0 60%,
+      /* water surface shimmer */
+      #2e8bc0 70%,
+      #1f6f9e 85%,
+      #0f4f78 100%
     );
 }
 
@@ -246,12 +279,15 @@ body {
 }
 
 #hud-left {
-  background: rgba(0, 0, 0, 0.65);
+  background: linear-gradient(135deg, rgba(0,0,0,0.75) 0%, rgba(20,10,0,0.80) 100%);
   border: 2px solid var(--gold);
   border-radius: 2px;
   padding: 6px 10px;
   min-width: 180px;
   backdrop-filter: blur(4px);
+  box-shadow: 0 0 10px rgba(255,215,0,0.12), inset 0 0 8px rgba(0,0,0,0.4);
+  /* decorative top edge */
+  border-top: 3px solid var(--gold-bright);
 }
 
 #map-name {
@@ -369,14 +405,14 @@ body {
   bottom: 8px;
   right: 8px;
   width: 270px;
-  background: rgba(0, 0, 0, 0.72);
+  background: linear-gradient(135deg, rgba(0,0,0,0.80) 0%, rgba(10,5,20,0.85) 100%);
   border: 2px solid var(--gold-dim);
   border-radius: 3px;
   padding: 6px 8px;
   z-index: 10;
   backdrop-filter: blur(3px);
-  /* prevent overflow from log lines */
   overflow: hidden;
+  box-shadow: 0 0 12px rgba(255,215,0,0.08), inset 0 0 6px rgba(0,0,0,0.5);
 }
 
 #log-title {
@@ -420,15 +456,16 @@ body {
 /* ── World Controller ─────────────────────────────────────────── */
 #world-controller {
   width: var(--world-w);
-  background: var(--frame-bg);
+  background: linear-gradient(180deg, #1c0e00 0%, var(--frame-bg) 60%);
   border: 4px solid var(--gold);
-  border-top: none;
+  border-top: 2px solid rgba(255,215,0,0.40);
   border-radius: 0 0 6px 6px;
   padding: 10px 14px;
   display: flex;
   gap: 18px;
   align-items: flex-start;
   flex-wrap: wrap;
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .controller-section {
@@ -463,21 +500,22 @@ body {
   font-family: var(--font-main);
   font-size: 17px;
   padding: 4px 12px;
-  background: #2a1300;
+  background: linear-gradient(180deg, #3a1800 0%, #1e0a00 100%);
   color: var(--gold);
   border: 2px solid var(--gold);
   border-radius: 2px;
   cursor: pointer;
-  transition: background 0.08s, transform 0.08s;
+  transition: background 0.08s, transform 0.08s, box-shadow 0.08s;
   text-shadow: 1px 1px 0 #000;
   image-rendering: pixelated;
   white-space: nowrap;
 }
 
 .pixel-btn:hover {
-  background: #4a2a00;
+  background: linear-gradient(180deg, #5a2800 0%, #3a1400 100%);
   transform: translateY(-2px);
-  box-shadow: 0 2px 0 #000;
+  box-shadow: 0 3px 0 #000, 0 0 8px rgba(255,215,0,0.3);
+  color: var(--gold-bright);
 }
 
 .pixel-btn:active {
@@ -486,19 +524,21 @@ body {
 }
 
 .pixel-btn.is-active {
-  background: #6b3d00;
+  background: linear-gradient(180deg, #7a4a00 0%, #4a2800 100%);
   color: #fff;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6), 0 0 6px rgba(255,215,0,0.25);
+  border-color: var(--gold-bright);
 }
 
 .pixel-btn.danger-btn {
   border-color: #ff6644;
   color: #ff6644;
-  background: #1a0800;
+  background: linear-gradient(180deg, #2a0800 0%, #140300 100%);
 }
 
 .pixel-btn.danger-btn:hover {
-  background: #3a1200;
+  background: linear-gradient(180deg, #4a1200 0%, #2a0800 100%);
+  box-shadow: 0 3px 0 #000, 0 0 8px rgba(255,100,68,0.3);
 }
 
 /* ── Responsive scale-down on small screens ─────────────────── */
@@ -514,4 +554,18 @@ body {
     transform: scale(0.65);
     transform-origin: top center;
   }
+}
+
+/* ── BG Layer Info Text ──────────────────────────────────────── */
+.bg-info-text {
+  font-size: 14px;
+  color: rgba(255, 215, 0, 0.65);
+  text-shadow: 1px 1px 0 #000;
+  margin-top: 5px;
+  line-height: 1.6;
+  width: 100%;
+}
+
+.bg-info-text strong {
+  color: #88ddff;
 }

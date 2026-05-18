@@ -44,18 +44,33 @@ const MAX_LOG = 8;
 const TIME_UPDATE_INTERVAL_MS = 60_000;
 
 const BG_LAYER_STORAGE_KEYS = {
-  sky: 'idle-julian-bg-sky',
-  mid: 'idle-julian-bg-mid',
+  back:  'idle-julian-bg-back',
   front: 'idle-julian-bg-front',
 };
 
 const SKY_DECORATION_EMOJIS = new Set(['☁️', '🦇', '🌕', '⭐']);
 
 const TIME_TONES = [
-  { id: 'pagi',  label: 'Pagi',  startHour: 5,  endHour: 10, overlay: 'rgba(255, 223, 145, 0.18)' },
-  { id: 'siang', label: 'Siang', startHour: 11, endHour: 14, overlay: 'rgba(255, 255, 255, 0.03)' },
-  { id: 'sore',  label: 'Sore',  startHour: 15, endHour: 17, overlay: 'rgba(255, 166, 92, 0.24)' },
-  { id: 'malam', label: 'Malam', startHour: 18, endHour: 4,  overlay: 'rgba(26, 44, 96, 0.42)' },
+  {
+    id: 'pagi',  label: 'Pagi',
+    startHour: 5, endHour: 10,
+    overlay: 'linear-gradient(to bottom, rgba(255,190,80,0.38) 0%, rgba(255,215,130,0.22) 45%, rgba(255,230,160,0.06) 70%, transparent 100%)',
+  },
+  {
+    id: 'siang', label: 'Siang',
+    startHour: 11, endHour: 14,
+    overlay: 'linear-gradient(to bottom, rgba(200,240,255,0.10) 0%, rgba(220,245,255,0.04) 50%, transparent 70%)',
+  },
+  {
+    id: 'sore',  label: 'Sore',
+    startHour: 15, endHour: 17,
+    overlay: 'linear-gradient(to bottom, rgba(240,100,30,0.42) 0%, rgba(255,150,60,0.28) 40%, rgba(255,120,0,0.10) 70%, transparent 100%)',
+  },
+  {
+    id: 'malam', label: 'Malam',
+    startHour: 18, endHour: 4,
+    overlay: 'linear-gradient(to bottom, rgba(8,18,75,0.72) 0%, rgba(18,28,100,0.52) 45%, rgba(10,15,60,0.25) 70%, rgba(5,8,30,0.10) 100%)',
+  },
 ];
 
 // ================================================================
@@ -94,22 +109,24 @@ const MAPS = [
     ],
   },
   {
-    id: 'kedai-minum',
-    name: 'Kedai Minum',
-    subtitle: 'The Tavern',
-    allowedTypes: ['warga', 'kucing'],
+    id: 'jembatan',
+    name: 'Jembatan Batu',
+    subtitle: 'The Stone Bridge',
+    allowedTypes: ['warga', 'ksatria', 'kucing'],
     decorations: [
-      { emoji: '🍺', x: 8,  y: 12, size: 36 },
-      { emoji: '🍻', x: 78, y: 10, size: 36 },
-      { emoji: '🪑', x: 20, y: 55, size: 34 },
-      { emoji: '🪑', x: 55, y: 55, size: 34 },
-      { emoji: '🪑', x: 35, y: 55, size: 34 },
-      { emoji: '🕯️', x: 50, y: 8,  size: 30 },
-      { emoji: '🕯️', x: 15, y: 8,  size: 30 },
-      { emoji: '🛢️', x: 3,  y: 65, size: 34 },
-      { emoji: '🛢️', x: 90, y: 62, size: 34 },
-      { emoji: '🪵', x: 85, y: 68, size: 32 },
-      { emoji: '🎶', x: 72, y: 22, size: 28 },
+      { emoji: '🌉', x: 35, y: 38, size: 80 },
+      { emoji: '🌊', x: 5,  y: 68, size: 34 },
+      { emoji: '🌊', x: 20, y: 70, size: 28 },
+      { emoji: '🌊', x: 60, y: 69, size: 32 },
+      { emoji: '🌊', x: 80, y: 68, size: 30 },
+      { emoji: '🐟', x: 12, y: 78, size: 26 },
+      { emoji: '🐟', x: 72, y: 77, size: 24 },
+      { emoji: '🏔️', x: 2,  y: 12, size: 52 },
+      { emoji: '🏔️', x: 72, y: 10, size: 60 },
+      { emoji: '☁️', x: 15, y: 5,  size: 36 },
+      { emoji: '☁️', x: 55, y: 3,  size: 28 },
+      { emoji: '🌿', x: 3,  y: 60, size: 28 },
+      { emoji: '🌿', x: 88, y: 62, size: 26 },
     ],
   },
   {
@@ -191,10 +208,21 @@ const CHAR_TYPES = {
 // ── GAME STATE ──────────────────────────────────────────────────
 // ================================================================
 
-/** @type {MapDef} Currently active map */
-let currentMap = MAPS[0];
+/** @type {MapDef|null} Currently active map */
+let currentMap = null;
 
 /**
+ * Per-map character state. Each key is a map ID; each value is the array
+ * of CharState objects that belong to that map.
+ * @type {Object.<string, CharState[]>}
+ */
+const mapCharacters = {};
+MAPS.forEach(m => { mapCharacters[m.id] = []; });
+
+/**
+ * Active character list — always points to mapCharacters[currentMap.id].
+ * @type {CharState[]}
+ */
  * @typedef {Object} CharState
  * @property {number}      id
  * @property {string}      type
@@ -237,8 +265,7 @@ const timePeriodEl   = document.getElementById('time-period');
 const populationEl   = document.getElementById('population');
 const charContainer  = document.getElementById('character-container');
 const timeToneEl     = document.getElementById('time-tone');
-const customBgSkyEl  = document.getElementById('custom-bg-sky');
-const customBgMidEl  = document.getElementById('custom-bg-mid');
+const customBgBackEl  = document.getElementById('custom-bg-back');
 const customBgFrontEl = document.getElementById('custom-bg-front');
 const logMessagesEl  = document.getElementById('log-messages');
 const mapButtonsEl   = document.getElementById('map-buttons');
@@ -247,13 +274,11 @@ const clearBtn       = document.getElementById('clear-btn');
 const clearBgBtn     = document.getElementById('clear-bg-btn');
 const bgUploadButtons = document.querySelectorAll('.bg-upload-btn');
 const bgUploadInputs = {
-  sky: document.getElementById('bg-upload-sky'),
-  mid: document.getElementById('bg-upload-mid'),
+  back:  document.getElementById('bg-upload-back'),
   front: document.getElementById('bg-upload-front'),
 };
 const customBgLayers = {
-  sky: customBgSkyEl,
-  mid: customBgMidEl,
+  back:  customBgBackEl,
   front: customBgFrontEl,
 };
 
@@ -303,7 +328,7 @@ function getCurrentTimeTone() {
 function updateTimeTone() {
   const tone = getCurrentTimeTone();
   timePeriodEl.textContent = `🕒 ${tone.label}`;
-  timeToneEl.style.backgroundColor = tone.overlay;
+  timeToneEl.style.background = tone.overlay;
   gameBox.dataset.timePeriod = tone.id;
 }
 
@@ -363,27 +388,28 @@ function renderMapDecorations() {
 
 /**
  * Switch the active map.
- * Characters whose type is not allowed in the new map are removed.
+ * Each map has its own independent character roster — characters from the
+ * previous map are hidden and restored when returning to that map.
  *
  * @param {MapDef} map
  */
 function switchMap(map) {
+  // Save & hide previous map's characters
+  if (currentMap !== null) {
+    characters.forEach(c => { c.el.style.display = 'none'; });
+  }
+
   currentMap = map;
+
+  // Restore this map's characters (or start with an empty list)
+  characters = mapCharacters[map.id];
+  characters.forEach(c => { c.el.style.display = ''; });
 
   // Swap background CSS class
   gameBox.className = `map-${map.id}`;
 
   // HUD
   mapNameEl.textContent = `📍 ${map.name}`;
-
-  // Remove characters not permitted on this map
-  characters = characters.filter(char => {
-    if (!map.allowedTypes.includes(char.type)) {
-      char.el.remove();
-      return false;
-    }
-    return true;
-  });
 
   renderMapDecorations();
   renderSpawnButtons();
@@ -660,7 +686,7 @@ function applyGravity(char, dt) {
 }
 
 /**
- * @param {'sky'|'mid'|'front'} layer
+ * @param {'back'|'front'} layer
  * @param {string|null} imageDataUrl
  */
 function applyCustomBackgroundLayer(layer, imageDataUrl) {
@@ -676,7 +702,7 @@ function applyCustomBackgroundLayer(layer, imageDataUrl) {
 }
 
 /**
- * @param {'sky'|'mid'|'front'} layer
+ * @param {'back'|'front'} layer
  * @returns {string|null}
  */
 function readStoredBackground(layer) {
@@ -688,7 +714,7 @@ function readStoredBackground(layer) {
 }
 
 /**
- * @param {'sky'|'mid'|'front'} layer
+ * @param {'back'|'front'} layer
  * @param {string|null} value
  */
 function writeStoredBackground(layer, value) {
@@ -705,15 +731,15 @@ function writeStoredBackground(layer, value) {
 
 /** Load all persisted custom background layers from localStorage. */
 function loadCustomBackgroundLayers() {
-  /** @type {Array<'sky'|'mid'|'front'>} */
-  const layers = ['sky', 'mid', 'front'];
+  /** @type {Array<'back'|'front'>} */
+  const layers = ['back', 'front'];
   layers.forEach(layer => {
     applyCustomBackgroundLayer(layer, readStoredBackground(layer));
   });
 }
 
 /**
- * @param {'sky'|'mid'|'front'} layer
+ * @param {'back'|'front'} layer
  * @param {File} file
  */
 function uploadBackgroundLayer(layer, file) {
@@ -745,8 +771,8 @@ function bindBackgroundControls() {
     });
   });
 
-  /** @type {Array<'sky'|'mid'|'front'>} */
-  const layers = ['sky', 'mid', 'front'];
+  /** @type {Array<'back'|'front'>} */
+  const layers = ['back', 'front'];
   layers.forEach(layer => {
     const input = bgUploadInputs[layer];
     if (!input) return;
@@ -796,8 +822,11 @@ function spawnCharacter(type) {
 
 /** Remove all characters from the current map. */
 function clearAllCharacters() {
-  characters.forEach(c => c.el.remove());
-  characters = [];
+  const mapChars = mapCharacters[currentMap.id];
+  mapChars.forEach(c => c.el.remove());
+  mapChars.length = 0;
+  // Keep the `characters` reference in sync
+  characters = mapChars;
   updatePopulationDisplay();
   addLog(`🗑 Semua karakter dihapus.`);
 }
