@@ -33,8 +33,7 @@
 
         <!-- Map background layer (colour + CSS pattern) -->
         <div id="map-bg"></div>
-        <div id="custom-bg-sky" class="custom-bg-layer"></div>
-        <div id="custom-bg-mid" class="custom-bg-layer"></div>
+        <div id="custom-bg-back" class="custom-bg-layer"></div>
 
         <!-- Static map decorations (emoji landmarks) -->
         <div id="map-decorations"></div>
@@ -93,13 +92,15 @@
         <div class="controller-section controller-section--full">
           <div class="ctrl-label">⟨ BG LAYERS (WEBP) ⟩</div>
           <div class="ctrl-buttons">
-            <button class="pixel-btn bg-upload-btn" data-layer="sky">🌤️ Sky</button>
-            <button class="pixel-btn bg-upload-btn" data-layer="mid">🏘️ Mid</button>
+            <button class="pixel-btn bg-upload-btn" data-layer="back">🌄 Back</button>
             <button class="pixel-btn bg-upload-btn" data-layer="front">🌾 Front</button>
             <button class="pixel-btn danger-btn" id="clear-bg-btn">🧹 Clear BG</button>
           </div>
-          <input type="file" id="bg-upload-sky" accept="image/webp" hidden />
-          <input type="file" id="bg-upload-mid" accept="image/webp" hidden />
+          <div class="bg-info-text">
+            ⬛ Back (sky &amp; horizon): <strong>800 × 600 px</strong> — area langit aktif 800 × 420 px (atas 70%)<br>
+            ⬜ Front (bangunan &amp; elemen tanah): <strong>800 × 600 px</strong> — area tanah 800 × 180 px (bawah 30%)
+          </div>
+          <input type="file" id="bg-upload-back" accept="image/webp" hidden />
           <input type="file" id="bg-upload-front" accept="image/webp" hidden />
         </div>
 
