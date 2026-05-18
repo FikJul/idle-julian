@@ -178,8 +178,8 @@ let currentMap = MAPS[0];
  * @property {string}      state      - Behaviour state machine value
  * @property {number}      timer      - Countdown in ms
  * @property {number}      direction  - +1 / -1 for patroller
-   * @property {{x:number,y:number}|null} patrolA
-   * @property {{x:number,y:number}|null} patrolB
+ * @property {{x:number,y:number}|null} patrolA
+ * @property {{x:number,y:number}|null} patrolB
  */
 
 /** @type {CharState[]} */
@@ -550,6 +550,7 @@ function moveTowards(char, speed) {
 
   if (dist <= speed) {
     char.x = char.targetX;
+    char.y = char.targetY;
     return true;
   }
 
