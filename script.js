@@ -223,6 +223,7 @@ MAPS.forEach(m => { mapCharacters[m.id] = []; });
  * Active character list — always points to mapCharacters[currentMap.id].
  * @type {CharState[]}
  */
+/**
  * @typedef {Object} CharState
  * @property {number}      id
  * @property {string}      type
