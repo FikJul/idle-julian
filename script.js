@@ -35,9 +35,11 @@ const FRAME_MS = 1000 / 60;
 // Frame-ratio clamps avoid extreme jumps after lag spikes and tiny-dt crawl.
 const MIN_FRAME_RATIO = 0.5;
 const MAX_FRAME_RATIO = 4;
+const HERO_SIDE_PADDING = 20;
+const HERO_FALLBACK_WIDTH = 64;
 
 /** Maximum number of characters allowed simultaneously */
-const MAX_CHARACTERS = 14;
+const MAX_CHARACTERS = 1;
 
 /** How many log entries to keep visible */
 const MAX_LOG = 8;
@@ -46,6 +48,12 @@ const TIME_UPDATE_INTERVAL_MS = 60_000;
 const BG_LAYER_STORAGE_KEYS = {
   back:  'idle-julian-bg-back',
   front: 'idle-julian-bg-front',
+};
+
+const HERO_ASSET_PATHS = {
+  design: 'assets/characters/male_hero/male_hero-design.png',
+  idle:   'assets/characters/male_hero/male_hero-idle.png',
+  walk:   'assets/characters/male_hero/male_hero-walk.png',
 };
 
 const SKY_DECORATION_EMOJIS = new Set(['☁️', '🦇', '🌕', '⭐']);
@@ -93,7 +101,7 @@ const MAPS = [
     id: 'alun-alun',
     name: 'Alun-Alun Desa',
     subtitle: 'Village Square',
-    allowedTypes: ['warga', 'ksatria', 'kucing'],
+    allowedTypes: ['male-hero'],
     decorations: [
       { emoji: '🌳', x: 4,  y: 38, size: 44 },
       { emoji: '🌳', x: 84, y: 36, size: 44 },
@@ -112,7 +120,7 @@ const MAPS = [
     id: 'jembatan',
     name: 'Jembatan Batu',
     subtitle: 'The Stone Bridge',
-    allowedTypes: ['warga', 'ksatria', 'kucing'],
+    allowedTypes: ['male-hero'],
     decorations: [
       { emoji: '🌉', x: 35, y: 38, size: 80 },
       { emoji: '🌊', x: 5,  y: 68, size: 34 },
@@ -133,7 +141,7 @@ const MAPS = [
     id: 'pinggiran-hutan',
     name: 'Pinggiran Hutan',
     subtitle: 'The Outskirts',
-    allowedTypes: ['warga', 'slime', 'kucing'],
+    allowedTypes: ['male-hero'],
     decorations: [
       { emoji: '🌲', x: 3,  y: 25, size: 52 },
       { emoji: '🌲', x: 12, y: 30, size: 44 },
@@ -160,7 +168,7 @@ const MAPS = [
  * @typedef {Object} CharTypeDef
  * @property {string}  label        - Display name
  * @property {string}  emoji        - Sprite emoji
- * @property {string}  behavior     - 'wanderer'|'patroller'|'bouncer'|'sprinter'
+ * @property {string}  behavior     - 'wanderer'|'patroller'|'bouncer'|'sprinter'|'auto-walker'
  * @property {number}  speed        - Pixels per frame (at 60 fps)
  * @property {number}  [idleMin]    - Minimum idle time (ms)
  * @property {number}  [idleMax]    - Maximum idle time (ms)
@@ -171,36 +179,13 @@ const MAPS = [
 
 /** @type {Object.<string, CharTypeDef>} */
 const CHAR_TYPES = {
-  warga: {
-    label:    'Warga',
+  'male-hero': {
+    label:    'Male Hero',
     emoji:    '🧑',
-    behavior: 'wanderer',
-    speed:    0.9,
-    idleMin:  2000,
-    idleMax:  4500,
-  },
-  ksatria: {
-    label:     'Ksatria',
-    emoji:     '⚔️',
-    behavior:  'patroller',
-    speed:     1.4,
-    patrolLen: 220,
-  },
-  slime: {
-    label:    'Slime',
-    emoji:    '🟢',
-    behavior: 'bouncer',
+    behavior: 'auto-walker',
     speed:    1.1,
-    idleMin:  600,
-    idleMax:  1800,
-  },
-  kucing: {
-    label:   'Kucing',
-    emoji:   '🐱',
-    behavior:'sprinter',
-    speed:   6.5,
-    sitMin:  5000,
-    sitMax:  11000,
+    idleMin:  1200,
+    idleMax:  2300,
   },
 };
 
@@ -240,6 +225,15 @@ MAPS.forEach(m => { mapCharacters[m.id] = []; });
  * @property {{x:number,y:number}|null} patrolB
  * @property {number}      vy
  * @property {number}      groundY
+ * @property {HTMLDivElement} [spriteEl]
+ * @property {HTMLImageElement} [spriteImg]
+ * @property {HTMLSpanElement} [spriteFallbackEl]
+ * @property {number}      [minX]
+ * @property {number}      [maxX]
+ * @property {string}      [lastVisualState]
+ * @property {number}      [lastFacing]
+ * @property {string[]}    [spriteCandidates]
+ * @property {number}      [spriteCandidateIndex]
  */
 
 /** @type {CharState[]} */
@@ -447,7 +441,15 @@ function createCharacter(type) {
 
   const spriteEl = document.createElement('div');
   spriteEl.className = 'char-sprite';
-  spriteEl.textContent = typeDef.emoji;
+  const spriteFallbackEl = document.createElement('span');
+  spriteFallbackEl.className = 'char-sprite-fallback';
+  spriteFallbackEl.textContent = typeDef.emoji;
+  const spriteImg = document.createElement('img');
+  spriteImg.className = 'char-sprite-img';
+  spriteImg.alt = `${typeDef.label} sprite`;
+  spriteImg.draggable = false;
+  spriteEl.appendChild(spriteFallbackEl);
+  spriteEl.appendChild(spriteImg);
 
   const labelEl = document.createElement('div');
   labelEl.className = 'char-label';
@@ -458,6 +460,10 @@ function createCharacter(type) {
   el.style.left = x + 'px';
   el.style.top  = y + 'px';
   charContainer.appendChild(el);
+  const measuredWidth = Math.max(
+    HERO_FALLBACK_WIDTH,
+    Math.round(el.offsetWidth || HERO_FALLBACK_WIDTH),
+  );
   const groundY = getGroundYForCharacter(el);
 
   /** @type {CharState} */
@@ -477,9 +483,32 @@ function createCharacter(type) {
     patrolB:    null,
     vy:         0,
     groundY,
+    spriteEl,
+    spriteImg,
+    spriteFallbackEl,
+    minX:       HERO_SIDE_PADDING,
+    maxX:       Math.max(HERO_SIDE_PADDING, WORLD_W - measuredWidth - HERO_SIDE_PADDING),
+    lastVisualState: '',
+    lastFacing: 0,
+  };
+  spriteImg.onload = () => {
+    if (!char.spriteFallbackEl || !char.spriteImg) return;
+    spriteImg.style.display = 'block';
+    char.spriteFallbackEl.style.display = 'none';
+  };
+  spriteImg.onerror = () => {
+    if (!char.spriteCandidates?.length) return;
+    char.spriteCandidateIndex = (char.spriteCandidateIndex ?? 0) + 1;
+    if (char.spriteCandidateIndex < char.spriteCandidates.length) {
+      spriteImg.src = char.spriteCandidates[char.spriteCandidateIndex];
+    } else if (char.spriteFallbackEl) {
+      spriteImg.style.display = 'none';
+      char.spriteFallbackEl.style.display = 'block';
+    }
   };
 
   initBehavior(char);
+  syncHeroVisual(char, true);
   return char;
 }
 
@@ -505,7 +534,40 @@ function initBehavior(char) {
       char.state = 'sitting';
       char.timer = randomBetween(char.typeDef.sitMin, char.typeDef.sitMax);
       break;
+
+    case 'auto-walker':
+      setupAutoWalker(char);
+      break;
   }
+}
+
+/** @param {CharState} char */
+function setupAutoWalker(char) {
+  char.direction = Math.random() < 0.5 ? -1 : 1;
+  char.state = 'walking';
+  char.targetY = char.groundY;
+}
+
+/**
+ * @param {CharState} char
+ * @param {boolean} forceSpriteReload
+ */
+function syncHeroVisual(char, forceSpriteReload = false) {
+  if (!char.spriteEl || !char.spriteImg || !char.spriteFallbackEl) return;
+  const isWalking = char.state === 'walking';
+  const facing = char.direction >= 0 ? 1 : -1;
+  if (forceSpriteReload || char.lastFacing !== facing) {
+    char.spriteEl.style.transform = `scaleX(${facing})`;
+    char.lastFacing = facing;
+  }
+  char.el.classList.toggle('is-walking', isWalking);
+
+  if (!forceSpriteReload && char.lastVisualState === char.state) return;
+  char.lastVisualState = char.state;
+  const preferredPath = isWalking ? HERO_ASSET_PATHS.walk : HERO_ASSET_PATHS.idle;
+  char.spriteCandidates = [preferredPath, HERO_ASSET_PATHS.design];
+  char.spriteCandidateIndex = 0;
+  char.spriteImg.src = char.spriteCandidates[0];
 }
 
 // ================================================================
@@ -561,6 +623,49 @@ function updateCharacter(char, dt) {
     case 'patroller': updatePatroller(char);      break;
     case 'bouncer':   updateBouncer(char, dt);   break;
     case 'sprinter':  updateSprinter(char, dt);  break;
+    case 'auto-walker': updateAutoWalker(char, dt); break;
+  }
+}
+
+/** @param {CharState} char @param {number} dt */
+function updateAutoWalker(char, dt) {
+  if (char.state === 'idle') {
+    char.timer -= dt;
+    if (char.timer <= 0) {
+      char.state = 'walking';
+      syncHeroVisual(char);
+      addLog(`🚶 ${char.typeDef.label} #${char.id} mulai berjalan`);
+    }
+    return;
+  }
+  if (char.state !== 'walking') return;
+
+  const minX = char.minX ?? HERO_SIDE_PADDING;
+  if (typeof char.maxX !== 'number') {
+    const measuredWidth = Math.max(
+      HERO_FALLBACK_WIDTH,
+      Math.round(char.el.offsetWidth || HERO_FALLBACK_WIDTH),
+    );
+    char.maxX = Math.max(minX, WORLD_W - measuredWidth - HERO_SIDE_PADDING);
+  }
+  const maxX = char.maxX;
+  char.x += char.typeDef.speed * char.direction;
+  syncHeroVisual(char);
+
+  if (char.x <= minX) {
+    char.x = minX;
+    char.direction = 1;
+    char.state = 'idle';
+    char.timer = randomBetween(char.typeDef.idleMin, char.typeDef.idleMax);
+    syncHeroVisual(char);
+    addLog(`↪️ ${char.typeDef.label} #${char.id} berbalik ke kanan`);
+  } else if (char.x >= maxX) {
+    char.x = maxX;
+    char.direction = -1;
+    char.state = 'idle';
+    char.timer = randomBetween(char.typeDef.idleMin, char.typeDef.idleMax);
+    syncHeroVisual(char);
+    addLog(`↩️ ${char.typeDef.label} #${char.id} berbalik ke kiri`);
   }
 }
 
@@ -920,10 +1025,7 @@ function init() {
   switchMap(MAPS[0]);
 
   // 4. Spawn a small starting population
-  spawnCharacter('warga');
-  spawnCharacter('warga');
-  spawnCharacter('ksatria');
-  spawnCharacter('kucing');
+  spawnCharacter('male-hero');
 
   // 5. Welcome message
   addLog(`🌟 Selamat datang di ${MAPS[0].name}!`);
