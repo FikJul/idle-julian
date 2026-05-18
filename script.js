@@ -20,6 +20,7 @@ const RELEASE_DATE = new Date('2026-05-18T00:00:00Z');
 const WORLD_W = 800;
 const WORLD_H = 600;
 const SKY_HEIGHT = WORLD_H * 0.7;
+// Keep characters below HUD/cloud decorations and above the 70/30 ground split.
 const CHARACTER_TOP_MARGIN = 110;
 const CHARACTER_BOTTOM_MARGIN = 70;
 const CHARACTER_Y_MIN = CHARACTER_TOP_MARGIN;
@@ -548,16 +549,16 @@ function updateSprinter(char, dt) {
  * @returns {boolean} true when arrived
  */
 function moveTowards(char, speed) {
-  const dx   = char.targetX - char.x;
-  const dist = Math.abs(dx);
+  const deltaX = char.targetX - char.x;
+  const horizontalDist = Math.abs(deltaX);
 
-  if (dist <= speed) {
+  if (horizontalDist <= speed) {
     char.x = char.targetX;
     char.y = char.targetY;
     return true;
   }
 
-  char.x += Math.sign(dx) * speed;
+  char.x += Math.sign(deltaX) * speed;
   return false;
 }
 
