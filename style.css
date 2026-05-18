@@ -113,66 +113,74 @@ body {
 /* Village Square */
 #game-box.map-alun-alun #map-bg {
   background:
-    /* cobblestone tile pattern */
+    /* ground blocks */
     repeating-linear-gradient(
       90deg,
-      rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px,
-      transparent 1px, transparent 32px
+      rgba(70, 48, 28, 0.35) 0px, rgba(70, 48, 28, 0.35) 3px,
+      rgba(96, 66, 40, 0.25) 3px, rgba(96, 66, 40, 0.25) 32px
     ),
     repeating-linear-gradient(
       0deg,
-      rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px,
-      transparent 1px, transparent 32px
+      rgba(58, 40, 24, 0.25) 0px, rgba(58, 40, 24, 0.25) 2px,
+      rgba(82, 55, 33, 0.15) 2px, rgba(82, 55, 33, 0.15) 30px
     ),
-    /* sky / ground split */
+    /* sky 70% / ground 30% */
     linear-gradient(
       to bottom,
-      #87CEEB 0%,
-      #a8dff5 30%,
-      #87CEEB 38%,
-      #6B8E4E 38%,
-      #5a7a38 100%
+      #84d8ff 0%,
+      #b8ebff 35%,
+      #99deff 70%,
+      #6fbb58 70%,
+      #6fbb58 73%,
+      #7b5a34 73%,
+      #5e4328 100%
     );
 }
 
 /* The Tavern (indoor) */
 #game-box.map-kedai-minum #map-bg {
   background:
-    /* wood plank pattern */
+    /* stone/dirt blocks */
     repeating-linear-gradient(
       90deg,
-      rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 1px,
-      transparent 1px, transparent 80px
+      rgba(66, 66, 72, 0.40) 0px, rgba(66, 66, 72, 0.40) 2px,
+      rgba(84, 84, 92, 0.22) 2px, rgba(84, 84, 92, 0.22) 24px
     ),
     repeating-linear-gradient(
       0deg,
-      rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px,
-      transparent 1px, transparent 40px
+      rgba(35, 35, 40, 0.25) 0px, rgba(35, 35, 40, 0.25) 2px,
+      rgba(58, 58, 65, 0.15) 2px, rgba(58, 58, 65, 0.15) 24px
     ),
     linear-gradient(
       to bottom,
-      #2e1a08 0%,
-      #4a2710 35%,
-      #6b3d1a 55%,
-      #8b5228 100%
+      #8fdcff 0%,
+      #c6f2ff 36%,
+      #9ddfff 70%,
+      #8ccf6f 70%,
+      #8ccf6f 73%,
+      #6a676f 73%,
+      #4b4a50 100%
     );
 }
 
 /* The Outskirts (forest) */
 #game-box.map-pinggiran-hutan #map-bg {
   background:
-    /* leaf shimmer pattern */
+    /* rock/soil texture */
     repeating-linear-gradient(
       135deg,
-      rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px,
-      transparent 2px, transparent 20px
+      rgba(72, 64, 54, 0.30) 0px, rgba(72, 64, 54, 0.30) 3px,
+      rgba(58, 50, 42, 0.20) 3px, rgba(58, 50, 42, 0.20) 20px
     ),
     linear-gradient(
       to bottom,
-      #060d03 0%,
-      #0d2006 25%,
-      #142e07 50%,
-      #0a1a04 100%
+      #79caff 0%,
+      #b5e8ff 35%,
+      #8fd2ff 70%,
+      #5faa4b 70%,
+      #5faa4b 73%,
+      #5e503f 73%,
+      #4a3f32 100%
     );
 }
 
