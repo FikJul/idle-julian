@@ -352,10 +352,12 @@ body {
 }
 
 .char-sprite-img {
-  width: 100%;
   height: 100%;
-  object-fit: contain;
+  width: auto;
+  max-width: none;
+  display: none;
   image-rendering: pixelated;
+  transform: translateX(0%);
 }
 
 .char-sprite-fallback {
@@ -375,8 +377,8 @@ body {
 
 /* ── Character Type Styling ──────────────────────────────────── */
 .char-male-hero .char-sprite {
-  border-color: #7bd9ff;
-  background: rgba(12, 24, 40, 0.55);
+  border-color: transparent;
+  background: transparent;
 }
 
 /* ── Character Animations ────────────────────────────────────── */
@@ -391,13 +393,11 @@ body {
   50%      { transform: translateY(-4px); }
 }
 
-.char-male-hero .char-sprite-img,
-.char-male-hero .char-sprite-fallback {
+.char-male-hero {
   animation: hero-idle-float 1.8s ease-in-out infinite;
 }
 
-.char-male-hero.is-walking .char-sprite-img,
-.char-male-hero.is-walking .char-sprite-fallback {
+.char-male-hero.is-walking {
   animation: hero-walk-bob 0.28s ease-in-out infinite;
 }
 
