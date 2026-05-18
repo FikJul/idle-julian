@@ -460,7 +460,10 @@ function createCharacter(type) {
   el.style.left = x + 'px';
   el.style.top  = y + 'px';
   charContainer.appendChild(el);
-  const width = el.getBoundingClientRect().width;
+  const measuredWidth = Math.max(
+    HERO_FALLBACK_WIDTH,
+    Math.round(el.offsetWidth || HERO_FALLBACK_WIDTH),
+  );
   const groundY = getGroundYForCharacter(el);
 
   /** @type {CharState} */
@@ -484,12 +487,12 @@ function createCharacter(type) {
     spriteImg,
     spriteFallbackEl,
     minX:       HERO_SIDE_PADDING,
-    maxX:       Math.max(HERO_SIDE_PADDING, WORLD_W - width - HERO_SIDE_PADDING),
+    maxX:       Math.max(HERO_SIDE_PADDING, WORLD_W - measuredWidth - HERO_SIDE_PADDING),
     lastVisualState: '',
     lastFacing: 0,
   };
   spriteImg.onload = () => {
-    if (!char.spriteFallbackEl) return;
+    if (!char.spriteFallbackEl || !char.spriteImg) return;
     spriteImg.style.display = 'block';
     char.spriteFallbackEl.style.display = 'none';
   };
@@ -638,7 +641,14 @@ function updateAutoWalker(char, dt) {
   if (char.state !== 'walking') return;
 
   const minX = char.minX ?? HERO_SIDE_PADDING;
-  const maxX = char.maxX ?? Math.max(minX, WORLD_W - HERO_FALLBACK_WIDTH - HERO_SIDE_PADDING);
+  if (typeof char.maxX !== 'number') {
+    const measuredWidth = Math.max(
+      HERO_FALLBACK_WIDTH,
+      Math.round(char.el.offsetWidth || HERO_FALLBACK_WIDTH),
+    );
+    char.maxX = Math.max(minX, WORLD_W - measuredWidth - HERO_SIDE_PADDING);
+  }
+  const maxX = char.maxX;
   char.x += char.typeDef.speed * char.direction;
   syncHeroVisual(char);
 
