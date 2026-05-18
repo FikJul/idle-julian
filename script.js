@@ -26,8 +26,11 @@ const CHARACTER_TOP_MARGIN = 110;
 const CHARACTER_BOTTOM_MARGIN = 70;
 const CHARACTER_Y_MIN = CHARACTER_TOP_MARGIN;
 const CHARACTER_Y_MAX = GROUND_START_Y - CHARACTER_BOTTOM_MARGIN;
+// Simple gravity model (pixels/frame², normalized by frame ratio).
 const GRAVITY_ACCEL = 0.35;
+// Terminal fall speed in pixels/frame.
 const MAX_FALL_SPEED = 9;
+// Reference frame duration for 60 FPS timing normalization.
 const FRAME_MS = 1000 / 60;
 
 /** Maximum number of characters allowed simultaneously */
@@ -638,6 +641,7 @@ function getGroundYForCharacter(el) {
 
 /** @param {CharState} char @param {number} dt */
 function applyGravity(char, dt) {
+  // Clamp ratio to reduce extreme jumps on lag spikes and avoid tiny-dt crawl.
   const frameRatio = Math.max(0.5, Math.min(4, dt / FRAME_MS));
   if (char.y < char.groundY) {
     char.vy = Math.min(MAX_FALL_SPEED, char.vy + GRAVITY_ACCEL * frameRatio);
@@ -712,7 +716,9 @@ function loadCustomBackgroundLayers() {
  */
 function uploadBackgroundLayer(layer, file) {
   if (!file) return;
-  if (file.type !== 'image/webp') {
+  const isWebpByMime = file.type === 'image/webp';
+  const isWebpByName = file.name.toLowerCase().endsWith('.webp');
+  if (!isWebpByMime && !isWebpByName) {
     addLog('⚠️ File harus format WEBP.');
     return;
   }
