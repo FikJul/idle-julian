@@ -822,8 +822,11 @@ function spawnCharacter(type) {
 
 /** Remove all characters from the current map. */
 function clearAllCharacters() {
-  characters.forEach(c => c.el.remove());
-  characters.length = 0; // clear in-place to keep mapCharacters reference intact
+  const mapChars = mapCharacters[currentMap.id];
+  mapChars.forEach(c => c.el.remove());
+  mapChars.length = 0;
+  // Keep the `characters` reference in sync
+  characters = mapChars;
   updatePopulationDisplay();
   addLog(`🗑 Semua karakter dihapus.`);
 }
