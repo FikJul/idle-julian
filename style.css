@@ -336,16 +336,30 @@ body {
 }
 
 .char-sprite {
-  width: 36px;
-  height: 36px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  font-size: 34px;
   border: 2px solid rgba(255, 255, 255, 0.25);
   background: rgba(0, 0, 0, 0.35);
   border-radius: 3px;
   image-rendering: pixelated;
+  position: relative;
+  overflow: hidden;
+  transform-origin: center;
+}
+
+.char-sprite-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.char-sprite-fallback {
+  line-height: 1;
 }
 
 .char-label {
@@ -360,43 +374,31 @@ body {
 }
 
 /* ── Character Type Styling ──────────────────────────────────── */
-.char-warga   .char-sprite { border-color: #FFD700; background: rgba(80, 60, 10, 0.5); }
-.char-ksatria .char-sprite { border-color: #C0C0C0; background: rgba(30, 30, 60, 0.5); }
-.char-slime   .char-sprite { border-color: #44FF44; background: rgba(5,  50, 5,  0.5); }
-.char-kucing  .char-sprite { border-color: #FFA500; background: rgba(60, 35, 5,  0.5); }
+.char-male_hero .char-sprite {
+  border-color: #7bd9ff;
+  background: rgba(12, 24, 40, 0.55);
+}
 
 /* ── Character Animations ────────────────────────────────────── */
 
-/* Slime: perpetual vertical bounce */
-@keyframes slime-bounce {
-  0%, 100% { transform: translateY(0)    scaleX(1)    scaleY(1);    }
-  40%       { transform: translateY(-12px) scaleX(0.9) scaleY(1.1); }
-  60%       { transform: translateY(-14px) scaleX(0.85) scaleY(1.15); }
-  80%       { transform: translateY(-4px)  scaleX(1.05) scaleY(0.95); }
+@keyframes hero-idle-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
 }
 
-.char-slime .char-sprite {
-  animation: slime-bounce 0.6s ease-in-out infinite;
+@keyframes hero-walk-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
 }
 
-/* Kucing: sprint flash */
-@keyframes sprint-flash {
-  0%, 100% { opacity: 1;   filter: brightness(1);   }
-  50%       { opacity: 0.6; filter: brightness(1.8); }
+.char-male_hero .char-sprite-img,
+.char-male_hero .char-sprite-fallback {
+  animation: hero-idle-float 1.8s ease-in-out infinite;
 }
 
-.char-kucing.is-sprinting .char-sprite {
-  animation: sprint-flash 0.12s linear infinite;
-}
-
-/* Ksatria: subtle idle sway */
-@keyframes patrol-sway {
-  0%, 100% { transform: rotate(-2deg); }
-  50%       { transform: rotate(2deg); }
-}
-
-.char-ksatria .char-sprite {
-  animation: patrol-sway 1.2s ease-in-out infinite;
+.char-male_hero.is-walking .char-sprite-img,
+.char-male_hero.is-walking .char-sprite-fallback {
+  animation: hero-walk-bob 0.28s ease-in-out infinite;
 }
 
 /* ── Live Event Log ───────────────────────────────────────────── */
