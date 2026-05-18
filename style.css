@@ -336,8 +336,8 @@ body {
 }
 
 .char-sprite {
-  width: 64px;
-  height: 64px;
+  width: 128px;
+  height: 128px;
   display: flex;
   align-items: center;
   justify-content: center;
