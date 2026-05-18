@@ -37,6 +37,10 @@ const MIN_FRAME_RATIO = 0.5;
 const MAX_FRAME_RATIO = 4;
 const HERO_SIDE_PADDING = 20;
 const HERO_FALLBACK_WIDTH = 64;
+const HERO_IDLE_FRAMES = 10;
+const HERO_WALK_FRAMES = 10;
+const HERO_IDLE_FRAME_MS = 120;
+const HERO_WALK_FRAME_MS = 90;
 
 /** Maximum number of characters allowed simultaneously */
 const MAX_CHARACTERS = 1;
@@ -234,6 +238,10 @@ MAPS.forEach(m => { mapCharacters[m.id] = []; });
  * @property {number}      [lastFacing]
  * @property {string[]}    [spriteCandidates]
  * @property {number}      [spriteCandidateIndex]
+ * @property {number[]}    [spriteCandidateFrameCounts]
+ * @property {number}      [spriteFrameCount]
+ * @property {number}      [spriteFrameIndex]
+ * @property {number}      [spriteFrameElapsed]
  */
 
 /** @type {CharState[]} */
@@ -490,17 +498,21 @@ function createCharacter(type) {
     maxX:       Math.max(HERO_SIDE_PADDING, WORLD_W - measuredWidth - HERO_SIDE_PADDING),
     lastVisualState: '',
     lastFacing: 0,
+    spriteFrameCount: 1,
+    spriteFrameIndex: 0,
+    spriteFrameElapsed: 0,
   };
   spriteImg.onload = () => {
     if (!char.spriteFallbackEl || !char.spriteImg) return;
     spriteImg.style.display = 'block';
     char.spriteFallbackEl.style.display = 'none';
+    configureHeroSpriteImage(char);
   };
   spriteImg.onerror = () => {
     if (!char.spriteCandidates?.length) return;
-    char.spriteCandidateIndex = (char.spriteCandidateIndex ?? 0) + 1;
-    if (char.spriteCandidateIndex < char.spriteCandidates.length) {
-      spriteImg.src = char.spriteCandidates[char.spriteCandidateIndex];
+    const nextIndex = (char.spriteCandidateIndex ?? 0) + 1;
+    if (nextIndex < char.spriteCandidates.length) {
+      setHeroSpriteCandidate(char, nextIndex);
     } else if (char.spriteFallbackEl) {
       spriteImg.style.display = 'none';
       char.spriteFallbackEl.style.display = 'block';
@@ -565,9 +577,67 @@ function syncHeroVisual(char, forceSpriteReload = false) {
   if (!forceSpriteReload && char.lastVisualState === char.state) return;
   char.lastVisualState = char.state;
   const preferredPath = isWalking ? HERO_ASSET_PATHS.walk : HERO_ASSET_PATHS.idle;
+  const preferredFrames = isWalking ? HERO_WALK_FRAMES : HERO_IDLE_FRAMES;
   char.spriteCandidates = [preferredPath, HERO_ASSET_PATHS.design];
-  char.spriteCandidateIndex = 0;
-  char.spriteImg.src = char.spriteCandidates[0];
+  char.spriteCandidateFrameCounts = [preferredFrames, 1];
+  setHeroSpriteCandidate(char, 0);
+}
+
+/**
+ * @param {CharState} char
+ * @param {number} candidateIndex
+ */
+function setHeroSpriteCandidate(char, candidateIndex) {
+  if (!char.spriteImg || !char.spriteCandidates?.length) return;
+  if (candidateIndex < 0 || candidateIndex >= char.spriteCandidates.length) {
+    if (char.spriteFallbackEl) {
+      char.spriteImg.style.display = 'none';
+      char.spriteFallbackEl.style.display = 'block';
+    }
+    return;
+  }
+  const frameCounts = char.spriteCandidateFrameCounts ?? [];
+  char.spriteCandidateIndex = candidateIndex;
+  char.spriteFrameCount = Math.max(1, frameCounts[candidateIndex] ?? 1);
+  char.spriteFrameIndex = 0;
+  char.spriteFrameElapsed = 0;
+  renderHeroSpriteFrame(char);
+  char.spriteImg.src = char.spriteCandidates[candidateIndex];
+}
+
+/** @param {CharState} char */
+function configureHeroSpriteImage(char) {
+  if (!char.spriteImg) return;
+  const frameCount = Math.max(1, char.spriteFrameCount ?? 1);
+  char.spriteImg.style.width = `${frameCount * 100}%`;
+  char.spriteImg.style.height = '100%';
+  renderHeroSpriteFrame(char);
+}
+
+/** @param {CharState} char */
+function renderHeroSpriteFrame(char) {
+  if (!char.spriteImg) return;
+  const frameCount = Math.max(1, char.spriteFrameCount ?? 1);
+  const frameIndex = Math.max(0, Math.min(frameCount - 1, char.spriteFrameIndex ?? 0));
+  const frameShiftPercent = (frameIndex * 100) / frameCount;
+  char.spriteImg.style.transform = `translateX(-${frameShiftPercent}%)`;
+}
+
+/**
+ * @param {CharState} char
+ * @param {number} dt
+ */
+function updateHeroSpriteAnimation(char, dt) {
+  if (char.type !== 'male-hero' || !char.spriteImg) return;
+  const frameCount = Math.max(1, char.spriteFrameCount ?? 1);
+  if (frameCount <= 1 || char.spriteImg.style.display === 'none') return;
+  const frameDuration = char.state === 'walking' ? HERO_WALK_FRAME_MS : HERO_IDLE_FRAME_MS;
+  char.spriteFrameElapsed = (char.spriteFrameElapsed ?? 0) + dt;
+  while (char.spriteFrameElapsed >= frameDuration) {
+    char.spriteFrameElapsed -= frameDuration;
+    char.spriteFrameIndex = ((char.spriteFrameIndex ?? 0) + 1) % frameCount;
+    renderHeroSpriteFrame(char);
+  }
 }
 
 // ================================================================
@@ -609,6 +679,7 @@ function randomBetween(min, max) {
 function updateCharacters(deltaTime) {
   characters.forEach(char => {
     updateCharacter(char, deltaTime);
+    updateHeroSpriteAnimation(char, deltaTime);
     applyGravity(char, deltaTime);
     // Write position back to DOM
     char.el.style.left = char.x + 'px';
