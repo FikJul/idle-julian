@@ -108,6 +108,31 @@ body {
   transition: background 0.6s ease;
 }
 
+.custom-bg-layer {
+  position: absolute;
+  inset: 0;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: cover;
+  pointer-events: none;
+  opacity: 0;
+}
+
+#custom-bg-sky { z-index: 1; }
+#custom-bg-mid { z-index: 2; }
+#custom-bg-front {
+  z-index: 7;
+  background-size: 100% 100%;
+}
+
+#time-tone {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  transition: background-color 0.6s ease;
+}
+
 /* ── MAP THEMES ───────────────────────────────────────────────── */
 
 /* Village Square */
@@ -188,7 +213,7 @@ body {
 #map-decorations {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 3;
   pointer-events: none;
   user-select: none;
 }
@@ -200,6 +225,15 @@ body {
   pointer-events: none;
   /* subtle drop shadow keeps emoji readable on any background */
   filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.7));
+}
+
+.map-deco--sky {
+  transform: translateX(-50%);
+}
+
+.map-deco--ground {
+  top: 70%;
+  transform: translate(-50%, -100%);
 }
 
 /* ── HUD Overlay ─────────────────────────────────────────────── */
@@ -236,6 +270,13 @@ body {
 #population {
   font-size: 14px;
   color: #aad4ff;
+  text-shadow: 1px 1px 0 #000;
+  margin-top: 2px;
+}
+
+#time-period {
+  font-size: 14px;
+  color: #ffe58c;
   text-shadow: 1px 1px 0 #000;
   margin-top: 2px;
 }
@@ -399,6 +440,10 @@ body {
 /* push "WORLD" section to the far right */
 .controller-section--right {
   margin-left: auto;
+}
+
+.controller-section--full {
+  width: 100%;
 }
 
 .ctrl-label {

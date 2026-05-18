@@ -26,12 +26,31 @@ const CHARACTER_TOP_MARGIN = 110;
 const CHARACTER_BOTTOM_MARGIN = 70;
 const CHARACTER_Y_MIN = CHARACTER_TOP_MARGIN;
 const CHARACTER_Y_MAX = GROUND_START_Y - CHARACTER_BOTTOM_MARGIN;
+const GRAVITY_ACCEL = 0.35;
+const MAX_FALL_SPEED = 9;
+const FRAME_MS = 1000 / 60;
 
 /** Maximum number of characters allowed simultaneously */
 const MAX_CHARACTERS = 14;
 
 /** How many log entries to keep visible */
 const MAX_LOG = 8;
+const TIME_UPDATE_INTERVAL_MS = 60_000;
+
+const BG_LAYER_STORAGE_KEYS = {
+  sky: 'idle-julian-bg-sky',
+  mid: 'idle-julian-bg-mid',
+  front: 'idle-julian-bg-front',
+};
+
+const SKY_DECORATION_EMOJIS = new Set(['☁️', '🦇', '🌕', '⭐']);
+
+const TIME_TONES = [
+  { id: 'pagi',  label: 'Pagi',  startHour: 5,  endHour: 10, overlay: 'rgba(255, 223, 145, 0.18)' },
+  { id: 'siang', label: 'Siang', startHour: 11, endHour: 14, overlay: 'rgba(255, 255, 255, 0.03)' },
+  { id: 'sore',  label: 'Sore',  startHour: 15, endHour: 17, overlay: 'rgba(255, 166, 92, 0.24)' },
+  { id: 'malam', label: 'Malam', startHour: 18, endHour: 4,  overlay: 'rgba(26, 44, 96, 0.42)' },
+];
 
 // ================================================================
 // ── MAP DATA ────────────────────────────────────────────────────
@@ -184,6 +203,8 @@ let currentMap = MAPS[0];
  * @property {number}      direction  - +1 / -1 for patroller
  * @property {{x:number,y:number}|null} patrolA
  * @property {{x:number,y:number}|null} patrolB
+ * @property {number}      vy
+ * @property {number}      groundY
  */
 
 /** @type {CharState[]} */
@@ -206,12 +227,29 @@ const gameBox        = document.getElementById('game-box');
 const mapDecoEl      = document.getElementById('map-decorations');
 const mapNameEl      = document.getElementById('map-name');
 const dayCounterEl   = document.getElementById('day-counter');
+const timePeriodEl   = document.getElementById('time-period');
 const populationEl   = document.getElementById('population');
 const charContainer  = document.getElementById('character-container');
+const timeToneEl     = document.getElementById('time-tone');
+const customBgSkyEl  = document.getElementById('custom-bg-sky');
+const customBgMidEl  = document.getElementById('custom-bg-mid');
+const customBgFrontEl = document.getElementById('custom-bg-front');
 const logMessagesEl  = document.getElementById('log-messages');
 const mapButtonsEl   = document.getElementById('map-buttons');
 const spawnButtonsEl = document.getElementById('spawn-buttons');
 const clearBtn       = document.getElementById('clear-btn');
+const clearBgBtn     = document.getElementById('clear-bg-btn');
+const bgUploadButtons = document.querySelectorAll('.bg-upload-btn');
+const bgUploadInputs = {
+  sky: document.getElementById('bg-upload-sky'),
+  mid: document.getElementById('bg-upload-mid'),
+  front: document.getElementById('bg-upload-front'),
+};
+const customBgLayers = {
+  sky: customBgSkyEl,
+  mid: customBgMidEl,
+  front: customBgFrontEl,
+};
 
 // ================================================================
 // ── DAY COUNTER ─────────────────────────────────────────────────
@@ -239,6 +277,28 @@ function calculateGlobalDay() {
 /** Write the current day to the HUD. */
 function updateDayDisplay() {
   dayCounterEl.textContent = `DAY ${calculateGlobalDay()}`;
+}
+
+/**
+ * Determine current real-time day period and tone.
+ * @returns {{id:string,label:string,startHour:number,endHour:number,overlay:string}}
+ */
+function getCurrentTimeTone() {
+  const hour = new Date().getHours();
+  return TIME_TONES.find(tone => {
+    if (tone.startHour <= tone.endHour) {
+      return hour >= tone.startHour && hour <= tone.endHour;
+    }
+    return hour >= tone.startHour || hour <= tone.endHour;
+  }) || TIME_TONES[1];
+}
+
+/** Update HUD time period label and world tone overlay. */
+function updateTimeTone() {
+  const tone = getCurrentTimeTone();
+  timePeriodEl.textContent = `🕒 ${tone.label}`;
+  timeToneEl.style.backgroundColor = tone.overlay;
+  gameBox.dataset.timePeriod = tone.id;
 }
 
 // ================================================================
@@ -283,8 +343,13 @@ function renderMapDecorations() {
     const el = document.createElement('div');
     el.className = 'map-deco';
     el.textContent = deco.emoji;
-    el.style.left   = deco.x + '%';
-    el.style.top    = deco.y + '%';
+    el.style.left = deco.x + '%';
+    if (SKY_DECORATION_EMOJIS.has(deco.emoji)) {
+      el.classList.add('map-deco--sky');
+      el.style.top = deco.y + '%';
+    } else {
+      el.classList.add('map-deco--ground');
+    }
     if (deco.size) el.style.fontSize = deco.size + 'px';
     mapDecoEl.appendChild(el);
   });
@@ -360,6 +425,7 @@ function createCharacter(type) {
   el.style.left = x + 'px';
   el.style.top  = y + 'px';
   charContainer.appendChild(el);
+  const groundY = getGroundYForCharacter(el);
 
   /** @type {CharState} */
   const char = {
@@ -370,12 +436,14 @@ function createCharacter(type) {
     x,
     y,
     targetX:    x,
-    targetY:    y,
+    targetY:    groundY,
     state:      'idle',
     timer:      0,
     direction:  1,
     patrolA:    null,
     patrolB:    null,
+    vy:         0,
+    groundY,
   };
 
   initBehavior(char);
@@ -415,15 +483,15 @@ function initBehavior(char) {
 function pickWanderTarget(char) {
   char.targetX = 50 + Math.random() * (WORLD_W - 140);
   // Keep vertical lane fixed: movement is left/right only.
-  char.targetY = char.y;
+  char.targetY = char.groundY;
   char.state   = 'moving';
 }
 
 /** Set up a horizontal patrol corridor. @param {CharState} char */
 function setupPatrol(char) {
   const half = char.typeDef.patrolLen / 2;
-  char.patrolA = { x: Math.max(50,          char.x - half), y: char.y };
-  char.patrolB = { x: Math.min(WORLD_W - 50, char.x + half), y: char.y };
+  char.patrolA = { x: Math.max(50,          char.x - half), y: char.groundY };
+  char.patrolB = { x: Math.min(WORLD_W - 50, char.x + half), y: char.groundY };
 
   char.targetX = char.patrolB.x;
   char.targetY = char.patrolB.y;
@@ -446,6 +514,7 @@ function randomBetween(min, max) {
 function updateCharacters(deltaTime) {
   characters.forEach(char => {
     updateCharacter(char, deltaTime);
+    applyGravity(char, deltaTime);
     // Write position back to DOM
     char.el.style.left = char.x + 'px';
     char.el.style.top  = char.y + 'px';
@@ -555,13 +624,142 @@ function moveTowards(char, speed) {
 
   if (horizontalDist <= speed) {
     char.x = char.targetX;
-    // Safety snap to lane in case targetY is changed by future behavior additions.
-    char.y = char.targetY;
     return true;
   }
 
   char.x += Math.sign(deltaX) * speed;
   return false;
+}
+
+/** @param {HTMLElement} el */
+function getGroundYForCharacter(el) {
+  return GROUND_START_Y - el.getBoundingClientRect().height;
+}
+
+/** @param {CharState} char @param {number} dt */
+function applyGravity(char, dt) {
+  const frameRatio = Math.max(0.5, Math.min(4, dt / FRAME_MS));
+  if (char.y < char.groundY) {
+    char.vy = Math.min(MAX_FALL_SPEED, char.vy + GRAVITY_ACCEL * frameRatio);
+    char.y = Math.min(char.groundY, char.y + char.vy * frameRatio);
+  } else {
+    char.y = char.groundY;
+    char.vy = 0;
+  }
+  char.targetY = char.groundY;
+  if (char.patrolA && char.patrolB) {
+    char.patrolA.y = char.groundY;
+    char.patrolB.y = char.groundY;
+  }
+}
+
+/**
+ * @param {'sky'|'mid'|'front'} layer
+ * @param {string|null} imageDataUrl
+ */
+function applyCustomBackgroundLayer(layer, imageDataUrl) {
+  const layerEl = customBgLayers[layer];
+  if (!layerEl) return;
+  if (imageDataUrl) {
+    layerEl.style.backgroundImage = `url("${imageDataUrl}")`;
+    layerEl.style.opacity = '1';
+  } else {
+    layerEl.style.backgroundImage = 'none';
+    layerEl.style.opacity = '0';
+  }
+}
+
+/**
+ * @param {'sky'|'mid'|'front'} layer
+ * @returns {string|null}
+ */
+function readStoredBackground(layer) {
+  try {
+    return localStorage.getItem(BG_LAYER_STORAGE_KEYS[layer]);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {'sky'|'mid'|'front'} layer
+ * @param {string|null} value
+ */
+function writeStoredBackground(layer, value) {
+  try {
+    if (value) {
+      localStorage.setItem(BG_LAYER_STORAGE_KEYS[layer], value);
+    } else {
+      localStorage.removeItem(BG_LAYER_STORAGE_KEYS[layer]);
+    }
+  } catch {
+    addLog('⚠️ Gagal menyimpan background di browser.');
+  }
+}
+
+/** Load all persisted custom background layers from localStorage. */
+function loadCustomBackgroundLayers() {
+  /** @type {Array<'sky'|'mid'|'front'>} */
+  const layers = ['sky', 'mid', 'front'];
+  layers.forEach(layer => {
+    applyCustomBackgroundLayer(layer, readStoredBackground(layer));
+  });
+}
+
+/**
+ * @param {'sky'|'mid'|'front'} layer
+ * @param {File} file
+ */
+function uploadBackgroundLayer(layer, file) {
+  if (!file) return;
+  if (file.type !== 'image/webp') {
+    addLog('⚠️ File harus format WEBP.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const result = typeof reader.result === 'string' ? reader.result : null;
+    if (!result) {
+      addLog('⚠️ Gagal membaca file background.');
+      return;
+    }
+    writeStoredBackground(layer, result);
+    applyCustomBackgroundLayer(layer, result);
+    addLog(`🖼️ Layer ${layer.toUpperCase()} diperbarui.`);
+  };
+  reader.readAsDataURL(file);
+}
+
+/** Bind upload and clear interactions for custom backgrounds. */
+function bindBackgroundControls() {
+  bgUploadButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const layer = btn.dataset.layer;
+      const input = bgUploadInputs[layer];
+      if (!input) return;
+      input.click();
+    });
+  });
+
+  /** @type {Array<'sky'|'mid'|'front'>} */
+  const layers = ['sky', 'mid', 'front'];
+  layers.forEach(layer => {
+    const input = bgUploadInputs[layer];
+    if (!input) return;
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      if (file) uploadBackgroundLayer(layer, file);
+      input.value = '';
+    });
+  });
+
+  clearBgBtn?.addEventListener('click', () => {
+    layers.forEach(layer => {
+      writeStoredBackground(layer, null);
+      applyCustomBackgroundLayer(layer, null);
+    });
+    addLog('🧹 Semua layer background dihapus.');
+  });
 }
 
 // ================================================================
@@ -675,9 +873,13 @@ function gameLoop(ts) {
 function init() {
   // 1. Compute and show the persistent Global Day
   updateDayDisplay();
+  updateTimeTone();
+  setInterval(updateTimeTone, TIME_UPDATE_INTERVAL_MS);
 
   // 2. Build static UI
   buildMapButtons();
+  bindBackgroundControls();
+  loadCustomBackgroundLayers();
   clearBtn.addEventListener('click', clearAllCharacters);
 
   // 3. Load the default map (Village Square)
