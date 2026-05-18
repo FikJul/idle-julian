@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Idle Julian — Fantasy RPG Village</title>
+
+  <!-- Pixel art fonts from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="app">
+
+    <!-- ═══════════════════════════════════
+         ARCADE CABINET FRAME
+    ═══════════════════════════════════ -->
+    <div id="arcade-frame">
+
+      <!-- Cabinet title bar -->
+      <div id="arcade-title">✦ IDLE JULIAN ✦</div>
+
+      <!-- ─────────────────────────────────
+           GAME WORLD BOX  (800 × 600)
+      ───────────────────────────────── -->
+      <div id="game-box">
+
+        <!-- Map background layer (colour + CSS pattern) -->
+        <div id="map-bg"></div>
+
+        <!-- Static map decorations (emoji landmarks) -->
+        <div id="map-decorations"></div>
+
+        <!-- ── HUD overlay (top-left) ── -->
+        <div id="hud">
+          <div id="hud-left">
+            <div id="map-name">📍 Loading…</div>
+            <div id="day-counter">DAY 1</div>
+            <div id="population">👥 0 characters</div>
+          </div>
+        </div>
+
+        <!-- ── Character container ── -->
+        <div id="character-container"></div>
+
+        <!-- ── Live event log (bottom-right) ── -->
+        <div id="live-log">
+          <div id="log-title">► EVENT LOG</div>
+          <div id="log-messages"></div>
+        </div>
+
+      </div><!-- /#game-box -->
+
+      <!-- ─────────────────────────────────
+           WORLD CONTROLLER (below game box)
+      ───────────────────────────────── -->
+      <div id="world-controller">
+
+        <!-- Map switcher -->
+        <div class="controller-section">
+          <div class="ctrl-label">⟨ MAPS ⟩</div>
+          <div class="ctrl-buttons" id="map-buttons"></div>
+        </div>
+
+        <!-- Character spawner -->
+        <div class="controller-section">
+          <div class="ctrl-label">⟨ SPAWN ⟩</div>
+          <div class="ctrl-buttons" id="spawn-buttons"></div>
+        </div>
+
+        <!-- Clear all button -->
+        <div class="controller-section controller-section--right">
+          <div class="ctrl-label">⟨ WORLD ⟩</div>
+          <div class="ctrl-buttons">
+            <button class="pixel-btn danger-btn" id="clear-btn" title="Remove all characters">
+              🗑 Clear All
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /#world-controller -->
+
+    </div><!-- /#arcade-frame -->
+
+  </div><!-- /#app -->
+
+  <script src="script.js"></script>
+</body>
+</html>
