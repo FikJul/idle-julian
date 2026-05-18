@@ -19,12 +19,12 @@ const RELEASE_DATE = new Date('2026-05-18T00:00:00Z');
 /** Size of the game world (matches CSS) */
 const WORLD_W = 800;
 const WORLD_H = 600;
-const SKY_HEIGHT = WORLD_H * 0.7;
+const GROUND_START_Y = WORLD_H * 0.7;
 // Keep characters below HUD/cloud decorations and above the 70/30 ground split.
 const CHARACTER_TOP_MARGIN = 110;
 const CHARACTER_BOTTOM_MARGIN = 70;
 const CHARACTER_Y_MIN = CHARACTER_TOP_MARGIN;
-const CHARACTER_Y_MAX = SKY_HEIGHT - CHARACTER_BOTTOM_MARGIN;
+const CHARACTER_Y_MAX = GROUND_START_Y - CHARACTER_BOTTOM_MARGIN;
 
 /** Maximum number of characters allowed simultaneously */
 const MAX_CHARACTERS = 14;
@@ -554,6 +554,7 @@ function moveTowards(char, speed) {
 
   if (horizontalDist <= speed) {
     char.x = char.targetX;
+    // Safety snap to lane in case targetY is changed by future behavior additions.
     char.y = char.targetY;
     return true;
   }
