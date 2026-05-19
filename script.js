@@ -41,6 +41,7 @@ const HERO_IDLE_FRAMES = 10;
 const HERO_WALK_FRAMES = 10;
 const HERO_IDLE_FRAME_MS = 120;
 const HERO_WALK_FRAME_MS = 90;
+const RESIZE_REFRESH_DEBOUNCE_MS = 120;
 
 /** Maximum number of characters allowed simultaneously */
 const MAX_CHARACTERS = 1;
@@ -256,6 +257,7 @@ let logEntries = [];
 
 /** Game-loop timing */
 let lastTimestamp = 0;
+let resizeRefreshTimer = null;
 
 // ================================================================
 // ── DOM REFERENCES ──────────────────────────────────────────────
@@ -645,6 +647,17 @@ function refreshHeroSpriteFrameWidthCache() {
       renderHeroSpriteFrame(char);
     });
   });
+}
+
+/** Debounced refresh for sprite frame width cache on viewport resize. */
+function handleResizeFrameCacheRefresh() {
+  if (resizeRefreshTimer !== null) {
+    clearTimeout(resizeRefreshTimer);
+  }
+  resizeRefreshTimer = window.setTimeout(() => {
+    resizeRefreshTimer = null;
+    refreshHeroSpriteFrameWidthCache();
+  }, RESIZE_REFRESH_DEBOUNCE_MS);
 }
 
 /** @param {CharState} char */
@@ -1125,7 +1138,7 @@ function init() {
   bindBackgroundControls();
   loadCustomBackgroundLayers();
   clearBtn.addEventListener('click', clearAllCharacters);
-  window.addEventListener('resize', refreshHeroSpriteFrameWidthCache);
+  window.addEventListener('resize', handleResizeFrameCacheRefresh);
 
   // 3. Load the default map (Village Square)
   switchMap(MAPS[0]);
