@@ -477,7 +477,7 @@ function createCharacter(type) {
     HERO_FALLBACK_WIDTH,
     Math.round(el.offsetWidth || HERO_FALLBACK_WIDTH),
   );
-  const groundY = getGroundYForCharacter(el);
+  const groundY = getGroundYForCharacter(el, type);
 
   /** @type {CharState} */
   const char = {
@@ -884,14 +884,14 @@ function moveTowards(char, speed) {
   return false;
 }
 
-/** @param {HTMLElement} el */
-function getGroundYForCharacter(el) {
+/** @param {HTMLElement} el @param {string} type */
+function getGroundYForCharacter(el, type = '') {
   const spriteEl = el.querySelector('.char-sprite');
   const spriteHeight =
     spriteEl instanceof HTMLElement
       ? spriteEl.getBoundingClientRect().height
       : el.getBoundingClientRect().height;
-  const anchorRatio = el.classList.contains('char-male-hero')
+  const anchorRatio = type === 'male-hero'
     ? HERO_GROUND_ANCHOR_RATIO
     : 1;
   const anchorHeight = Math.round(spriteHeight * anchorRatio);
