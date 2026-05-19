@@ -41,6 +41,7 @@ const HERO_IDLE_FRAMES = 10;
 const HERO_WALK_FRAMES = 10;
 const HERO_IDLE_FRAME_MS = 120;
 const HERO_WALK_FRAME_MS = 90;
+const RESIZE_REFRESH_DEBOUNCE_MS = 120;
 
 /** Maximum number of characters allowed simultaneously */
 const MAX_CHARACTERS = 1;
@@ -242,6 +243,7 @@ MAPS.forEach(m => { mapCharacters[m.id] = []; });
  * @property {number}      [spriteFrameCount]
  * @property {number}      [spriteFrameIndex]
  * @property {number}      [spriteFrameElapsed]
+ * @property {number}      [cachedFrameWidth]
  */
 
 /** @type {CharState[]} */
@@ -255,6 +257,7 @@ let logEntries = [];
 
 /** Game-loop timing */
 let lastTimestamp = 0;
+let resizeRefreshTimer = null;
 
 // ================================================================
 // ── DOM REFERENCES ──────────────────────────────────────────────
@@ -502,6 +505,7 @@ function createCharacter(type) {
     spriteFrameIndex: 0,
     spriteFrameElapsed: 0,
   };
+  char.cachedFrameWidth = Math.max(1, Math.round(char.spriteEl.getBoundingClientRect().width));
   spriteImg.onload = () => {
     if (!char.spriteFallbackEl || !char.spriteImg) return;
     spriteImg.style.display = 'block';
@@ -607,20 +611,58 @@ function setHeroSpriteCandidate(char, candidateIndex) {
 
 /** @param {CharState} char */
 function configureHeroSpriteImage(char) {
-  if (!char.spriteImg) return;
+  if (!char.spriteImg || !char.spriteEl) return;
   const frameCount = Math.max(1, char.spriteFrameCount ?? 1);
-  char.spriteImg.style.width = `${frameCount * 100}%`;
+  const frameWidth = getHeroSpriteFrameWidth(char, true);
+  char.spriteImg.style.width = `${frameWidth * frameCount}px`;
   char.spriteImg.style.height = '100%';
   renderHeroSpriteFrame(char);
 }
 
+/**
+ * @param {CharState} char
+ * @param {boolean} [forceRefresh=false]
+ * @returns {number}
+ */
+function getHeroSpriteFrameWidth(char, forceRefresh = false) {
+  if (
+    !forceRefresh &&
+    typeof char.cachedFrameWidth === 'number' &&
+    char.cachedFrameWidth > 0
+  ) {
+    return char.cachedFrameWidth;
+  }
+  if (!char.spriteEl) return 1;
+  const frameWidth = Math.max(1, Math.round(char.spriteEl.getBoundingClientRect().width));
+  char.cachedFrameWidth = frameWidth;
+  return frameWidth;
+}
+
+/** Recompute cached sprite frame widths after layout-affecting changes. */
+function refreshHeroSpriteFrameWidthCache() {
+  characters.forEach(char => {
+    if (char.type !== 'male-hero') return;
+    getHeroSpriteFrameWidth(char, true);
+    renderHeroSpriteFrame(char);
+  });
+}
+
+/** Debounced refresh for sprite frame width cache on viewport resize. */
+function handleResizeFrameCacheRefresh() {
+  clearTimeout(resizeRefreshTimer);
+  resizeRefreshTimer = window.setTimeout(() => {
+    refreshHeroSpriteFrameWidthCache();
+  }, RESIZE_REFRESH_DEBOUNCE_MS);
+}
+
 /** @param {CharState} char */
 function renderHeroSpriteFrame(char) {
-  if (!char.spriteImg) return;
+  if (!char.spriteImg || !char.spriteEl) return;
   const frameCount = Math.max(1, char.spriteFrameCount ?? 1);
   const frameIndex = Math.max(0, Math.min(frameCount - 1, char.spriteFrameIndex ?? 0));
-  const frameShiftPercent = (frameIndex * 100) / frameCount;
-  char.spriteImg.style.transform = `translateX(-${frameShiftPercent}%)`;
+  const frameWidth = getHeroSpriteFrameWidth(char);
+  const frameShiftPx = frameIndex * frameWidth;
+  char.spriteImg.style.transform = `translateX(-${frameShiftPx}px)`;
 }
 
 /**
@@ -1091,6 +1133,7 @@ function init() {
   bindBackgroundControls();
   loadCustomBackgroundLayers();
   clearBtn.addEventListener('click', clearAllCharacters);
+  window.addEventListener('resize', handleResizeFrameCacheRefresh);
 
   // 3. Load the default map (Village Square)
   switchMap(MAPS[0]);
