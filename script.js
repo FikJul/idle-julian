@@ -504,7 +504,6 @@ function createCharacter(type) {
     spriteFrameCount: 1,
     spriteFrameIndex: 0,
     spriteFrameElapsed: 0,
-    cachedFrameWidth: HERO_FALLBACK_WIDTH,
   };
   char.cachedFrameWidth = Math.max(1, Math.round(char.spriteEl.getBoundingClientRect().width));
   spriteImg.onload = () => {
@@ -652,7 +651,6 @@ function refreshHeroSpriteFrameWidthCache() {
 function handleResizeFrameCacheRefresh() {
   clearTimeout(resizeRefreshTimer);
   resizeRefreshTimer = window.setTimeout(() => {
-    resizeRefreshTimer = null;
     refreshHeroSpriteFrameWidthCache();
   }, RESIZE_REFRESH_DEBOUNCE_MS);
 }
