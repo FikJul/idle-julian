@@ -111,6 +111,7 @@ const MAPS = [
     name: 'Alun-Alun Desa',
     subtitle: 'Village Square',
     allowedTypes: ['male-hero'],
+    // Intentionally empty: keep only characters, without static map objects.
     decorations: [],
   },
 ];
