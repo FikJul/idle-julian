@@ -502,6 +502,7 @@ function createCharacter(type) {
     spriteFrameCount: 1,
     spriteFrameIndex: 0,
     spriteFrameElapsed: 0,
+    cachedFrameWidth: Math.max(1, Math.round(spriteEl.getBoundingClientRect().width)),
   };
   spriteImg.onload = () => {
     if (!char.spriteFallbackEl || !char.spriteImg) return;
@@ -610,8 +611,7 @@ function setHeroSpriteCandidate(char, candidateIndex) {
 function configureHeroSpriteImage(char) {
   if (!char.spriteImg || !char.spriteEl) return;
   const frameCount = Math.max(1, char.spriteFrameCount ?? 1);
-  const frameWidth = Math.max(1, Math.round(char.spriteEl.getBoundingClientRect().width));
-  char.cachedFrameWidth = frameWidth;
+  const frameWidth = getHeroSpriteFrameWidth(char, true);
   char.spriteImg.style.width = `${frameWidth * frameCount}px`;
   char.spriteImg.style.height = '100%';
   renderHeroSpriteFrame(char);
@@ -619,16 +619,32 @@ function configureHeroSpriteImage(char) {
 
 /**
  * @param {CharState} char
+ * @param {boolean} [forceRefresh=false]
  * @returns {number}
  */
-function getHeroSpriteFrameWidth(char) {
-  if (typeof char.cachedFrameWidth === 'number' && char.cachedFrameWidth > 0) {
+function getHeroSpriteFrameWidth(char, forceRefresh = false) {
+  if (
+    !forceRefresh &&
+    typeof char.cachedFrameWidth === 'number' &&
+    char.cachedFrameWidth > 0
+  ) {
     return char.cachedFrameWidth;
   }
   if (!char.spriteEl) return 1;
   const frameWidth = Math.max(1, Math.round(char.spriteEl.getBoundingClientRect().width));
   char.cachedFrameWidth = frameWidth;
   return frameWidth;
+}
+
+/** Recompute cached sprite frame widths after layout-affecting changes. */
+function refreshHeroSpriteFrameWidthCache() {
+  Object.values(mapCharacters).forEach(mapChars => {
+    mapChars.forEach(char => {
+      if (char.type !== 'male-hero') return;
+      getHeroSpriteFrameWidth(char, true);
+      renderHeroSpriteFrame(char);
+    });
+  });
 }
 
 /** @param {CharState} char */
@@ -1109,6 +1125,7 @@ function init() {
   bindBackgroundControls();
   loadCustomBackgroundLayers();
   clearBtn.addEventListener('click', clearAllCharacters);
+  window.addEventListener('resize', refreshHeroSpriteFrameWidthCache);
 
   // 3. Load the default map (Village Square)
   switchMap(MAPS[0]);
