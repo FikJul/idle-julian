@@ -242,6 +242,7 @@ MAPS.forEach(m => { mapCharacters[m.id] = []; });
  * @property {number}      [spriteFrameCount]
  * @property {number}      [spriteFrameIndex]
  * @property {number}      [spriteFrameElapsed]
+ * @property {number}      [cachedFrameWidth]
  */
 
 /** @type {CharState[]} */
@@ -610,9 +611,24 @@ function configureHeroSpriteImage(char) {
   if (!char.spriteImg || !char.spriteEl) return;
   const frameCount = Math.max(1, char.spriteFrameCount ?? 1);
   const frameWidth = Math.max(1, Math.round(char.spriteEl.getBoundingClientRect().width));
+  char.cachedFrameWidth = frameWidth;
   char.spriteImg.style.width = `${frameWidth * frameCount}px`;
   char.spriteImg.style.height = '100%';
   renderHeroSpriteFrame(char);
+}
+
+/**
+ * @param {CharState} char
+ * @returns {number}
+ */
+function getHeroSpriteFrameWidth(char) {
+  if (typeof char.cachedFrameWidth === 'number' && char.cachedFrameWidth > 0) {
+    return char.cachedFrameWidth;
+  }
+  if (!char.spriteEl) return 1;
+  const frameWidth = Math.max(1, Math.round(char.spriteEl.getBoundingClientRect().width));
+  char.cachedFrameWidth = frameWidth;
+  return frameWidth;
 }
 
 /** @param {CharState} char */
@@ -620,7 +636,7 @@ function renderHeroSpriteFrame(char) {
   if (!char.spriteImg || !char.spriteEl) return;
   const frameCount = Math.max(1, char.spriteFrameCount ?? 1);
   const frameIndex = Math.max(0, Math.min(frameCount - 1, char.spriteFrameIndex ?? 0));
-  const frameWidth = Math.max(1, Math.round(char.spriteEl.getBoundingClientRect().width));
+  const frameWidth = getHeroSpriteFrameWidth(char);
   const frameShiftPx = frameIndex * frameWidth;
   char.spriteImg.style.transform = `translateX(-${frameShiftPx}px)`;
 }
