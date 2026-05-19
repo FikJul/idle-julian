@@ -607,20 +607,22 @@ function setHeroSpriteCandidate(char, candidateIndex) {
 
 /** @param {CharState} char */
 function configureHeroSpriteImage(char) {
-  if (!char.spriteImg) return;
+  if (!char.spriteImg || !char.spriteEl) return;
   const frameCount = Math.max(1, char.spriteFrameCount ?? 1);
-  char.spriteImg.style.width = `${frameCount * 100}%`;
+  const frameWidth = Math.max(1, Math.round(char.spriteEl.getBoundingClientRect().width));
+  char.spriteImg.style.width = `${frameWidth * frameCount}px`;
   char.spriteImg.style.height = '100%';
   renderHeroSpriteFrame(char);
 }
 
 /** @param {CharState} char */
 function renderHeroSpriteFrame(char) {
-  if (!char.spriteImg) return;
+  if (!char.spriteImg || !char.spriteEl) return;
   const frameCount = Math.max(1, char.spriteFrameCount ?? 1);
   const frameIndex = Math.max(0, Math.min(frameCount - 1, char.spriteFrameIndex ?? 0));
-  const frameShiftPercent = (frameIndex * 100) / frameCount;
-  char.spriteImg.style.transform = `translateX(-${frameShiftPercent}%)`;
+  const frameWidth = Math.max(1, Math.round(char.spriteEl.getBoundingClientRect().width));
+  const frameShiftPx = frameIndex * frameWidth;
+  char.spriteImg.style.transform = `translateX(-${frameShiftPx}px)`;
 }
 
 /**
