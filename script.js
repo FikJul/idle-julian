@@ -21,7 +21,9 @@ const WORLD_W = 800;
 const WORLD_H = 600;
 const GROUND_HEIGHT = 180;
 const GROUND_START_Y = WORLD_H - GROUND_HEIGHT;
-const HERO_GROUND_ANCHOR_RATIO = 0.72;
+const GROUND_ANCHOR_RATIO_BY_TYPE = {
+  'male-hero': 0.72,
+};
 // 110px top margin keeps sprites below HUD panel and top decorations.
 const CHARACTER_TOP_MARGIN = 110;
 // 70px bottom margin keeps sprites visibly above the ground-start boundary.
@@ -891,9 +893,7 @@ function getGroundYForCharacter(el, type = '') {
     spriteEl instanceof HTMLElement
       ? spriteEl.getBoundingClientRect().height
       : el.getBoundingClientRect().height;
-  const anchorRatio = type === 'male-hero'
-    ? HERO_GROUND_ANCHOR_RATIO
-    : 1;
+  const anchorRatio = GROUND_ANCHOR_RATIO_BY_TYPE[type] ?? 1;
   const anchorHeight = Math.round(spriteHeight * anchorRatio);
   return GROUND_START_Y - anchorHeight;
 }
