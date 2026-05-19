@@ -504,8 +504,9 @@ function createCharacter(type) {
     spriteFrameCount: 1,
     spriteFrameIndex: 0,
     spriteFrameElapsed: 0,
-    cachedFrameWidth: Math.max(1, Math.round(spriteEl.getBoundingClientRect().width)),
+    cachedFrameWidth: HERO_FALLBACK_WIDTH,
   };
+  char.cachedFrameWidth = Math.max(1, Math.round(char.spriteEl.getBoundingClientRect().width));
   spriteImg.onload = () => {
     if (!char.spriteFallbackEl || !char.spriteImg) return;
     spriteImg.style.display = 'block';
@@ -640,20 +641,16 @@ function getHeroSpriteFrameWidth(char, forceRefresh = false) {
 
 /** Recompute cached sprite frame widths after layout-affecting changes. */
 function refreshHeroSpriteFrameWidthCache() {
-  Object.values(mapCharacters).forEach(mapChars => {
-    mapChars.forEach(char => {
-      if (char.type !== 'male-hero') return;
-      getHeroSpriteFrameWidth(char, true);
-      renderHeroSpriteFrame(char);
-    });
+  characters.forEach(char => {
+    if (char.type !== 'male-hero') return;
+    getHeroSpriteFrameWidth(char, true);
+    renderHeroSpriteFrame(char);
   });
 }
 
 /** Debounced refresh for sprite frame width cache on viewport resize. */
 function handleResizeFrameCacheRefresh() {
-  if (resizeRefreshTimer !== null) {
-    clearTimeout(resizeRefreshTimer);
-  }
+  clearTimeout(resizeRefreshTimer);
   resizeRefreshTimer = window.setTimeout(() => {
     resizeRefreshTimer = null;
     refreshHeroSpriteFrameWidthCache();
