@@ -19,7 +19,9 @@ const RELEASE_DATE = new Date('2026-05-18T00:00:00Z');
 /** Size of the game world (matches CSS) */
 const WORLD_W = 800;
 const WORLD_H = 600;
-const GROUND_START_Y = WORLD_H * 0.7;
+const GROUND_HEIGHT = 180;
+const GROUND_START_Y = WORLD_H - GROUND_HEIGHT;
+const HERO_GROUND_ANCHOR_RATIO = 0.72;
 // 110px top margin keeps sprites below HUD panel and top decorations.
 const CHARACTER_TOP_MARGIN = 110;
 // 70px bottom margin keeps sprites visibly above the ground-start boundary.
@@ -885,10 +887,14 @@ function moveTowards(char, speed) {
 /** @param {HTMLElement} el */
 function getGroundYForCharacter(el) {
   const spriteEl = el.querySelector('.char-sprite');
-  const anchorHeight =
+  const spriteHeight =
     spriteEl instanceof HTMLElement
       ? spriteEl.getBoundingClientRect().height
       : el.getBoundingClientRect().height;
+  const anchorRatio = el.classList.contains('char-male-hero')
+    ? HERO_GROUND_ANCHOR_RATIO
+    : 1;
+  const anchorHeight = Math.round(spriteHeight * anchorRatio);
   return GROUND_START_Y - anchorHeight;
 }
 
