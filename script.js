@@ -884,7 +884,12 @@ function moveTowards(char, speed) {
 
 /** @param {HTMLElement} el */
 function getGroundYForCharacter(el) {
-  return GROUND_START_Y - el.getBoundingClientRect().height;
+  const spriteEl = el.querySelector('.char-sprite');
+  const anchorHeight =
+    spriteEl instanceof HTMLElement
+      ? spriteEl.getBoundingClientRect().height
+      : el.getBoundingClientRect().height;
+  return GROUND_START_Y - anchorHeight;
 }
 
 /** @param {CharState} char @param {number} dt */
