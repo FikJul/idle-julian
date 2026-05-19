@@ -19,7 +19,11 @@ const RELEASE_DATE = new Date('2026-05-18T00:00:00Z');
 /** Size of the game world (matches CSS) */
 const WORLD_W = 800;
 const WORLD_H = 600;
-const GROUND_START_Y = WORLD_H * 0.7;
+const GROUND_HEIGHT = 180;
+const GROUND_START_Y = WORLD_H - GROUND_HEIGHT;
+const GROUND_ANCHOR_RATIO_BY_TYPE = {
+  'male-hero': 0.72,
+};
 // 110px top margin keeps sprites below HUD panel and top decorations.
 const CHARACTER_TOP_MARGIN = 110;
 // 70px bottom margin keeps sprites visibly above the ground-start boundary.
@@ -475,7 +479,7 @@ function createCharacter(type) {
     HERO_FALLBACK_WIDTH,
     Math.round(el.offsetWidth || HERO_FALLBACK_WIDTH),
   );
-  const groundY = getGroundYForCharacter(el);
+  const groundY = getGroundYForCharacter(el, type);
 
   /** @type {CharState} */
   const char = {
@@ -882,13 +886,15 @@ function moveTowards(char, speed) {
   return false;
 }
 
-/** @param {HTMLElement} el */
-function getGroundYForCharacter(el) {
+/** @param {HTMLElement} el @param {string} type */
+function getGroundYForCharacter(el, type = '') {
   const spriteEl = el.querySelector('.char-sprite');
-  const anchorHeight =
+  const spriteHeight =
     spriteEl instanceof HTMLElement
       ? spriteEl.getBoundingClientRect().height
       : el.getBoundingClientRect().height;
+  const anchorRatio = GROUND_ANCHOR_RATIO_BY_TYPE[type] ?? 1;
+  const anchorHeight = Math.round(spriteHeight * anchorRatio);
   return GROUND_START_Y - anchorHeight;
 }
 
